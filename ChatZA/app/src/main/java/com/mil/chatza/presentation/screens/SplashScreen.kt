@@ -9,6 +9,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -20,7 +25,10 @@ import androidx.compose.material3.*
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Black
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.mil.chatza.R
 import com.mil.chatza.presentation.navigation.Screen
 import com.mil.chatza.ui.theme.ChatZATheme
@@ -50,14 +58,14 @@ fun SplashScreen(navController: NavController) {
                 easing = FastOutSlowInEasing
             )
         )
-        delay(1000)
+        delay(500)
         navController.navigate(Screen.LoginPage.route)
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
-            .background(splashBackGroundColor),
-        contentAlignment = Alignment.Center
+        modifier = Modifier
+            .fillMaxSize()
+            .background(chatZaBrown)
     ) {
         Image(
             painter = painterResource(id = R.drawable.people),
@@ -65,37 +73,13 @@ fun SplashScreen(navController: NavController) {
             modifier = Modifier
                 .scale(scale.value)
                 .alpha(alpha.value)
+                .align(Alignment.Center)
         )
     }
-   /* val scale = remember {
-        androidx.compose.animation.core.Animatable(0f)
-    }
-    // Animation
-    LaunchedEffect(key1 = true) {
-        scale.animateTo(
-            targetValue = 0.7f,
-            // tween Animation
-            animationSpec = tween(
-                durationMillis = 800,
-                easing = {
-                    OvershootInterpolator(4f).getInterpolation(it)
-                })
-        )
-        // Customize the delay time
-        delay(3000L)
-        navController.navigate(Screen.LoginPage.route)
-    }
+}
 
-    // Image
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxSize().background(Color.White)
-    ) {
-        // Change the logo
-        Image(
-            painter = painterResource(id = R.drawable.zaflag),
-            contentDescription = "Logo",
-            modifier = Modifier.scale(scale.value)
-        )
-    }*/
+@Preview(showBackground = true)
+@Composable
+private fun PreviewSplash() {
+    SplashScreen(navController = rememberNavController())
 }
