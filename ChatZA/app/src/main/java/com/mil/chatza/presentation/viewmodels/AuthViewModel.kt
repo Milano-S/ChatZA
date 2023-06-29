@@ -53,7 +53,7 @@ class AuthViewModel : ViewModel() {
 
     //Email Authentication
     private var _emailAuthException = MutableLiveData<Exception>()
-    var emailAuthException: LiveData<Exception> = _signUpException
+    var emailAuthException: LiveData<Exception> = _emailAuthException
     suspend fun authenticateEmail(): EmailAuthResult {
         return try {
             auth.currentUser!!.sendEmailVerification().await()

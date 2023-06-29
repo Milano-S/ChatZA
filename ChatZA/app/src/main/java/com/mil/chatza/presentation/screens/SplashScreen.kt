@@ -58,7 +58,7 @@ fun SplashScreen(navController: NavController) {
                 easing = FastOutSlowInEasing
             )
         )
-        delay(500)
+        delay(300)
         navController.navigate(Screen.LoginPage.route)
     }
 

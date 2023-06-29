@@ -1,5 +1,6 @@
 package com.mil.chatza.presentation.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -48,11 +49,14 @@ import androidx.navigation.compose.rememberNavController
 import com.mil.chatza.R
 import com.mil.chatza.domain.model.SuccessEmailAuth
 import com.mil.chatza.presentation.components.ProgressBar
+import com.mil.chatza.presentation.navigation.Screen
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
 import com.mil.chatza.ui.theme.chatZaBlue
 import com.mil.chatza.ui.theme.chatZaBrown
 import kotlinx.coroutines.launch
 
+
+private const val TAG = "VerifyEmailScreen"
 
 @Composable
 fun VerifyEmailScreen(navController: NavHostController, authVM: AuthViewModel) {
@@ -63,11 +67,16 @@ fun VerifyEmailScreen(navController: NavHostController, authVM: AuthViewModel) {
     var progressBarState by remember { mutableStateOf(false) }
 
     //Send Authentication Email
-    LaunchedEffect(Unit){
+    LaunchedEffect(Unit) {
         if (authVM.authenticateEmail() != SuccessEmailAuth(true)) {
-            Toast.makeText(currentContext, authVM.emailAuthException.value!!.message.toString(), Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                currentContext,
+                authVM.emailAuthException.value?.message.toString(),
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
+
 
     Surface(
         modifier = Modifier
@@ -120,13 +129,26 @@ fun VerifyEmailScreen(navController: NavHostController, authVM: AuthViewModel) {
                     .clickable {
                         progressBarState = true
                         scope.launch {
-                            progressBarState = if (authVM.authenticateEmail() != SuccessEmailAuth(true)) {
-                                Toast.makeText(currentContext, authVM.emailAuthException.value!!.message.toString(), Toast.LENGTH_SHORT).show()
-                                false
-                            } else{
-                                Toast.makeText(currentContext, "Email Has Been Resent", Toast.LENGTH_SHORT).show()
-                                false
-                            }
+                            progressBarState =
+                                if (authVM.authenticateEmail() != SuccessEmailAuth(true)) {
+                                    Toast
+                                        .makeText(
+                                            currentContext,
+                                            authVM.emailAuthException.value?.message.toString(),
+                                            Toast.LENGTH_SHORT
+                                        )
+                                        .show()
+                                    false
+                                } else {
+                                    Toast
+                                        .makeText(
+                                            currentContext,
+                                            "Email Has Been Resent",
+                                            Toast.LENGTH_SHORT
+                                        )
+                                        .show()
+                                    false
+                                }
                         }
                     },
                 text = "Resend Email",
@@ -186,8 +208,11 @@ fun VerifyEmailScreen(navController: NavHostController, authVM: AuthViewModel) {
             Button(
                 onClick = {
                     authVM.auth.currentUser!!.reload()
-                    val toastText = if (authVM.auth.currentUser!!.isEmailVerified)"Email Authenticated" else "Not Authenticated"
+                    val toastText = if (authVM.auth.currentUser!!.isEmailVerified) "Email Authenticated" else "Not Authenticated"
                     Toast.makeText(currentContext, toastText, Toast.LENGTH_SHORT).show()
+                    if (authVM.auth.currentUser!!.isEmailVerified){
+                        navController.navigate(Screen.CreateProfilePage.route)
+                    }
                 },
                 shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
@@ -205,10 +230,10 @@ fun VerifyEmailScreen(navController: NavHostController, authVM: AuthViewModel) {
                 Text(text = "Proceed", fontSize = 15.sp, color = Color.DarkGray)
             }
 
-            when (progressBarState) {
-                true -> ProgressBar()
-                else -> {}
-            }
+        }
+        when (progressBarState) {
+            true -> ProgressBar()
+            else -> {}
         }
     }
 }

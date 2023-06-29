@@ -219,26 +219,31 @@ fun LoginScreen(navController: NavHostController, authVM: AuthViewModel) {
             //Login
             Button(
                 onClick = {
-                    validateLoginDetails()
+                    navController.navigate(Screen.DisclaimerPage.route)
+                    /*validateLoginDetails()
                     if (!isEmailError && !isPasswordError) {
                         progressBarState = true
                         scope.launch {
                             //Login Success
                             progressBarState = if (authVM.logIn(email = email.trimEnd(), password = password.trimEnd()) == SuccessLogin(true)){
-                                if (authVM.auth.currentUser!!.isEmailVerified){
-                                    Toast.makeText(currentContext, "Login Successfull", Toast.LENGTH_SHORT).show()
+                                if (!authVM.auth.currentUser!!.isEmailVerified){
+                                    Toast.makeText(currentContext, "Login Successful", Toast.LENGTH_SHORT).show()
                                     navController.navigate(Screen.VerifyEmailPage.route)
-                                }else{
+                                } else {
                                     //Go to create Profile
+                                    Toast.makeText(currentContext, "Logged In and Verified", Toast.LENGTH_SHORT).show()
+                                    navController.navigate(Screen.CreateProfilePage.route)
                                 }
                                 false
                             }else{
                                 //Login Failure
+                                email = ""
+                                password = ""
                                 Toast.makeText(currentContext, authVM.loginException.value!!.message.toString(), Toast.LENGTH_SHORT).show()
                                 false
                             }
                         }
-                    }
+                    }*/
                 },
                 shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
