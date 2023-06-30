@@ -30,6 +30,7 @@ class Consts {
 
         //Firebase Collections
         const val users = "users"
+        const val profileImages = "images"
 
         //Nav Graphs
         object Graph {

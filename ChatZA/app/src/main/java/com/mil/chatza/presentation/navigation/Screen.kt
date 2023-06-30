@@ -10,7 +10,7 @@ sealed class Screen(
     object CreateProfilePage : Screen("create_profile_page")
     object DisclaimerPage : Screen("disclaimer_page")
     object HomePage : Screen("home_page")
-    object HomeScreen : Screen("home_screen")
-    object SettingsPage : Screen("settings_page")
-    object AboutPage : Screen("about_page")
+    object HomeScreen : Screen("Home")
+    object SettingsScreen : Screen("settings_page")
+    object ProfileScreen : Screen("Profile")
 }

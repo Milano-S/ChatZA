@@ -399,5 +399,5 @@ fun Modifier.shake(enabled: Boolean, onAnimationFinish: () -> Unit) = composed(
 @Preview(showBackground = true)
 @Composable
 private fun PreviewRegister() {
-    RegisterScreen(navController = rememberNavController(), authVM = AuthViewModel())
+    //RegisterScreen(navController = rememberNavController(), authVM = AuthViewModel())
 }

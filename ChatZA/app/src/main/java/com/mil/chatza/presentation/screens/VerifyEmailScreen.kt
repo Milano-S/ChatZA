@@ -242,5 +242,5 @@ fun VerifyEmailScreen(navController: NavHostController, authVM: AuthViewModel) {
 @Composable
 @Preview()
 private fun PreviewEmailVerify() {
-    VerifyEmailScreen(navController = rememberNavController(), authVM = AuthViewModel())
+    //VerifyEmailScreen(navController = rememberNavController(), authVM = AuthViewModel())
 }

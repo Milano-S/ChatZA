@@ -45,11 +45,11 @@ fun NavGraph(
                 HomeScreen()
             }
 
-            composable(Screen.SettingsPage.route){
+            composable(Screen.SettingsScreen.route){
                 ProfileScreen()
             }
 
-            composable(Screen.AboutPage.route){
+            composable(Screen.ProfileScreen.route){
                 SearchScreen()
             }
         }
@@ -66,7 +66,7 @@ fun NavGraph(
 
             //Login
             composable(Screen.LoginPage.route) {
-                LoginScreen(navController = navController, authVM = authVM)
+                LoginScreen(navController = navController, authVM = authVM, firebaseVM = firebaseViewModel)
             }
 
             //Register

@@ -93,7 +93,7 @@ fun DisclaimerScreen(
 
             //Header Text
             Text(
-                "Disclaimer",
+                "ATTENTION",
                 style = TextStyle(
                     fontSize = 32.sp,
                     fontFamily = FontFamily.Default,
@@ -147,14 +147,6 @@ fun DisclaimerScreen(
             }
 
             Spacer(modifier = Modifier.height(40.dp))
-
-            Image(
-                modifier = Modifier
-                    .size(150.dp)
-                    .clip(RoundedCornerShape(56.dp))
-                    .clickable { },
-                painter = painterResource(id = R.drawable.people), contentDescription = "icon"
-            )
         }
     }
 }

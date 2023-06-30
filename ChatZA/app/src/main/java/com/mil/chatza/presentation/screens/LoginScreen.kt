@@ -1,7 +1,12 @@
 package com.mil.chatza.presentation.screens
 
+import android.app.Activity
+import android.net.Uri
 import android.util.Patterns
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -33,6 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,17 +64,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.auth.api.identity.BeginSignInResult
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.storage.FirebaseStorage
 import com.mil.chatza.R
+import com.mil.chatza.core.utils.Consts
+import com.mil.chatza.domain.model.Response
 import com.mil.chatza.domain.model.SuccessLogin
 import com.mil.chatza.presentation.components.ProgressBar
 import com.mil.chatza.presentation.navigation.Screen
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
+import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
 import com.mil.chatza.ui.theme.chatZaBlue
 import com.mil.chatza.ui.theme.chatZaBrown
 import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(navController: NavHostController, authVM: AuthViewModel) {
+fun LoginScreen(
+    navController: NavHostController,
+    authVM: AuthViewModel,
+    firebaseVM: FirebaseViewModel
+) {
 
     val currentContext = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -219,18 +236,23 @@ fun LoginScreen(navController: NavHostController, authVM: AuthViewModel) {
             //Login
             Button(
                 onClick = {
-                    navController.navigate(Screen.DisclaimerPage.route)
+                    navController.navigate(Consts.Companion.Graph.MAIN)
                     /*validateLoginDetails()
                     if (!isEmailError && !isPasswordError) {
                         progressBarState = true
                         scope.launch {
                             //Login Success
+                            val currentUser = authVM.auth.currentUser!!
                             progressBarState = if (authVM.logIn(email = email.trimEnd(), password = password.trimEnd()) == SuccessLogin(true)){
-                                if (!authVM.auth.currentUser!!.isEmailVerified){
+                                if (!currentUser.isEmailVerified){
+                                    //Not Verified
                                     Toast.makeText(currentContext, "Login Successful", Toast.LENGTH_SHORT).show()
                                     navController.navigate(Screen.VerifyEmailPage.route)
+                                } else if (currentUser.isEmailVerified && firebaseVM.getProfileDetails(currentUser.email.toString()).name != ""){
+                                    //Verified and has Profile
+                                    navController.navigate(route = Consts.Companion.Graph.MAIN)
                                 } else {
-                                    //Go to create Profile
+                                    //Verified and no Profile
                                     Toast.makeText(currentContext, "Logged In and Verified", Toast.LENGTH_SHORT).show()
                                     navController.navigate(Screen.CreateProfilePage.route)
                                 }
@@ -283,6 +305,7 @@ fun LoginScreen(navController: NavHostController, authVM: AuthViewModel) {
             }
             Spacer(modifier = Modifier.height(20.dp))
 
+            //Google and Facebook
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -303,7 +326,7 @@ fun LoginScreen(navController: NavHostController, authVM: AuthViewModel) {
                                 .background(chatZaBrown)
                                 .clickable {
                                     when (it) {
-                                        "Google" -> {}
+                                        "Google" -> {authVM.oneTapSignIn()}
                                         "Facebook" -> {}
                                     }
                                 },
@@ -331,17 +354,67 @@ fun LoginScreen(navController: NavHostController, authVM: AuthViewModel) {
                     }
                 }
             }
+
         }
         when (progressBarState) {
             true -> ProgressBar()
             else -> {}
         }
     }
+    //Sign In With Google
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            try {
+                val credentials =
+                    authVM.oneTapClient.getSignInCredentialFromIntent(result.data)
+                val googleIdToken = credentials.googleIdToken
+                val googleCredentials = GoogleAuthProvider.getCredential(googleIdToken, null)
+                authVM.signInWithGoogle(googleCredentials)
+            } catch (it: ApiException) {
+                print(it)
+            }
+        }
+    }
+
+    fun launch(signInResult: BeginSignInResult) {
+        val intent = IntentSenderRequest.Builder(signInResult.pendingIntent.intentSender).build()
+        launcher.launch(intent)
+    }
+
+    when (val oneTapSignInResponse = authVM.oneTapSignInResponse) {
+        is Response.Loading -> ProgressBar()
+        is Response.Success -> oneTapSignInResponse.data?.let {
+            LaunchedEffect(it) {
+                launch(it)
+            }
+        }
+
+        is Response.Failure -> LaunchedEffect(Unit) {
+            Toast.makeText(currentContext, oneTapSignInResponse.e.message.toString(), Toast.LENGTH_SHORT).show()
+            print(oneTapSignInResponse.e)
+        }
+    }
+    when (val signInWithGoogleResponse = authVM.signInWithGoogleResponse) {
+        is Response.Loading -> ProgressBar()
+        is Response.Success -> signInWithGoogleResponse.data?.let { signedIn ->
+            if (signedIn) {
+                LaunchedEffect(Unit) {
+                    //navController.popBackStack()
+                    navController.navigate(route = Screen.CreateProfilePage.route)
+                }
+            }
+        }
+
+        is Response.Failure -> LaunchedEffect(Unit) {
+            print(signInWithGoogleResponse.e)
+        }
+    }
 }
+
 
 
 @Preview(showBackground = true)
 @Composable
 private fun PreviewLogin() {
-    LoginScreen(navController = rememberNavController(), authVM = AuthViewModel())
+    //LoginScreen(navController = rememberNavController(), authVM = AuthViewModel(), firebaseVM = FirebaseViewModel())
 }

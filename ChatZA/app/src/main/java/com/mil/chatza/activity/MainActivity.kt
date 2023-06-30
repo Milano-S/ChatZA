@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -29,7 +30,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             ChatZATheme {
                 val navController = rememberNavController()
-                val authVM: AuthViewModel = viewModel()
+                val authVM: AuthViewModel = hiltViewModel()
                 val firebaseViewModel: FirebaseViewModel = viewModel()
 
                 NavGraph(

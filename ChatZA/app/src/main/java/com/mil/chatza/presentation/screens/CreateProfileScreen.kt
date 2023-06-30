@@ -33,6 +33,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.ExposedDropdownMenuDefaults
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.Button
@@ -70,6 +71,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.mil.chatza.R
 import com.mil.chatza.core.utils.Consts
+import com.mil.chatza.domain.model.SuccessImageUpload
 import com.mil.chatza.domain.model.SuccessUserUpload
 import com.mil.chatza.domain.model.UserProfile
 import com.mil.chatza.presentation.components.ProgressBar
@@ -84,6 +86,7 @@ import java.util.Calendar
 
 
 private const val TAG = "CreateProfileScreen"
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun CreateProfileScreen(
@@ -108,7 +111,7 @@ fun CreateProfileScreen(
 
 
     var selectedImageUri by remember {
-        mutableStateOf<Uri?>(null)
+        mutableStateOf<Uri?>(Uri.parse(""))
     }
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -248,8 +251,10 @@ fun CreateProfileScreen(
                 value = age.toString(),
                 singleLine = true,
                 onValueChange = {
-                    isAgeError = it.toInt() < 18
-                    age = it.toInt()
+                    if (it.isNotEmpty()) {
+                        isAgeError = it.toInt() < 18
+                        age = it.toInt()
+                    }
                 },
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                 label = { Text(text = "Age", color = Color.Gray) },
@@ -410,7 +415,8 @@ fun CreateProfileScreen(
                             name = username,
                             age = age.toString(),
                             gender = genderFilterTerm,
-                            province = selectedProvince
+                            province = selectedProvince,
+                            profileImageUrl = firebaseVM.imageUrl.value.toString()
                         )
                         userDataStoreVM.deleteUserProfile(userProfile)
                         userDataStoreVM.saveUserProfile(userProfile)
@@ -424,19 +430,31 @@ fun CreateProfileScreen(
                                 ).show()
                                 progressBarState = false
                             } else {
-                                progressBarState = if (firebaseVM.uploadUser(userProfile) == SuccessUserUpload(true)) {
-                                    //User Upload Success
-                                    Toast.makeText(currentContext, "Profile Successfully Created", Toast.LENGTH_SHORT).show()
-                                    navController.navigate(Screen.DisclaimerPage.route)
-                                    false
-                                } else {
-                                    Toast.makeText(
-                                        currentContext,
-                                        firebaseVM.userUploadException.value?.message.toString(),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    false
-                                }
+                                progressBarState =
+                                    if (firebaseVM.uploadImageToFirebaseStorage(imageUri = selectedImageUri!!) == SuccessImageUpload(
+                                            true
+                                        ) && firebaseVM.uploadUser(userProfile) == SuccessUserUpload(
+                                            true
+                                        )
+                                    ) {
+                                        //User Upload Success
+                                        Toast.makeText(
+                                            currentContext,
+                                            "Profile Successfully Created",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        //Profile Image Upload
+
+                                        navController.navigate(Screen.DisclaimerPage.route)
+                                        false
+                                    } else {
+                                        Toast.makeText(
+                                            currentContext,
+                                            firebaseVM.userUploadException.value?.message.toString(),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        false
+                                    }
                             }
                         }
                     }
