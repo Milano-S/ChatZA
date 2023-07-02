@@ -57,11 +57,11 @@ fun NavGraph(
         //Auth Nav
         navigation(
             route = Consts.Companion.Graph.AUTH,
-            startDestination = "splash_screen"
+            startDestination = Screen.SplashPage.route
         ) {
             //Splash
-            composable("splash_screen") {
-                SplashScreen(navController = navController)
+            composable(Screen.SplashPage.route) {
+                SplashScreen(navController = navController, authVM = authVM, firebaseVM = firebaseViewModel)
             }
 
             //Login

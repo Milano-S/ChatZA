@@ -58,7 +58,6 @@ class AuthViewModel @Inject constructor(
         signInWithGoogleResponse = repo.firebaseSignInWithGoogle(googleCredential)
     }
 
-
     //Sign Up
     private var _signUpException = MutableLiveData<Exception>()
     var signUpException: LiveData<Exception> = _signUpException

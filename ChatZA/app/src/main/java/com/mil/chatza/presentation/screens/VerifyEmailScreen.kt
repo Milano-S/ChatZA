@@ -54,6 +54,7 @@ import com.mil.chatza.presentation.viewmodels.AuthViewModel
 import com.mil.chatza.ui.theme.chatZaBlue
 import com.mil.chatza.ui.theme.chatZaBrown
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 
 private const val TAG = "VerifyEmailScreen"
@@ -207,7 +208,9 @@ fun VerifyEmailScreen(navController: NavHostController, authVM: AuthViewModel) {
 
             Button(
                 onClick = {
-                    authVM.auth.currentUser!!.reload()
+                    scope.launch {
+                        authVM.auth.currentUser!!.reload().await()
+                    }
                     val toastText = if (authVM.auth.currentUser!!.isEmailVerified) "Email Authenticated" else "Not Authenticated"
                     Toast.makeText(currentContext, toastText, Toast.LENGTH_SHORT).show()
                     if (authVM.auth.currentUser!!.isEmailVerified){

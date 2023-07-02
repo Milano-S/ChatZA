@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.Button
@@ -236,36 +237,43 @@ fun LoginScreen(
             //Login
             Button(
                 onClick = {
-                    navController.navigate(Consts.Companion.Graph.MAIN)
-                    /*validateLoginDetails()
+                    validateLoginDetails()
                     if (!isEmailError && !isPasswordError) {
                         progressBarState = true
                         scope.launch {
-                            //Login Success
-                            val currentUser = authVM.auth.currentUser!!
-                            progressBarState = if (authVM.logIn(email = email.trimEnd(), password = password.trimEnd()) == SuccessLogin(true)){
-                                if (!currentUser.isEmailVerified){
-                                    //Not Verified
-                                    Toast.makeText(currentContext, "Login Successful", Toast.LENGTH_SHORT).show()
-                                    navController.navigate(Screen.VerifyEmailPage.route)
-                                } else if (currentUser.isEmailVerified && firebaseVM.getProfileDetails(currentUser.email.toString()).name != ""){
-                                    //Verified and has Profile
-                                    navController.navigate(route = Consts.Companion.Graph.MAIN)
-                                } else {
-                                    //Verified and no Profile
-                                    Toast.makeText(currentContext, "Logged In and Verified", Toast.LENGTH_SHORT).show()
-                                    navController.navigate(Screen.CreateProfilePage.route)
+                            try {
+                                if (authVM.logIn(email = email.trimEnd(), password = password.trimEnd()) == SuccessLogin(true)) {
+                                    //Login Success
+                                    val currentUser = authVM.auth.currentUser!!
+                                    if (!currentUser.isEmailVerified) {
+                                        //Not Verified
+                                        Toast.makeText(currentContext, "Login Successful", Toast.LENGTH_SHORT).show()
+                                        navController.navigate(Screen.VerifyEmailPage.route)
+                                    } else if (currentUser.isEmailVerified && firebaseVM.getProfileDetails(currentUser.email.toString()).name != "") {
+                                        //Verified and has Profile
+                                        Toast.makeText(currentContext, "Sign In Success", Toast.LENGTH_SHORT).show()
+                                        navController.navigate(route = Consts.Companion.Graph.MAIN)
+                                    } else {
+                                        //Verified and no Profile
+                                        Toast.makeText(currentContext, "Logged In and Verified", Toast.LENGTH_SHORT).show()
+                                        navController.navigate(Screen.CreateProfilePage.route)
+                                    }
+                                }else{
+                                    //Login Failure
+                                    email = ""
+                                    password = ""
+                                    Toast.makeText(currentContext, authVM.loginException.value?.message.toString(), Toast.LENGTH_SHORT).show()
+                                    progressBarState = false
                                 }
-                                false
-                            }else{
-                                //Login Failure
+                            } catch (e: Exception) {
+                                //Login Exception
                                 email = ""
                                 password = ""
-                                Toast.makeText(currentContext, authVM.loginException.value!!.message.toString(), Toast.LENGTH_SHORT).show()
-                                false
+                                Toast.makeText(currentContext, e.message.toString(), Toast.LENGTH_SHORT).show()
+                                progressBarState = false
                             }
                         }
-                    }*/
+                    }
                 },
                 shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
@@ -326,7 +334,10 @@ fun LoginScreen(
                                 .background(chatZaBrown)
                                 .clickable {
                                     when (it) {
-                                        "Google" -> {authVM.oneTapSignIn()}
+                                        "Google" -> {
+                                            authVM.oneTapSignIn()
+                                        }
+
                                         "Facebook" -> {}
                                     }
                                 },
@@ -354,7 +365,6 @@ fun LoginScreen(
                     }
                 }
             }
-
         }
         when (progressBarState) {
             true -> ProgressBar()
@@ -362,19 +372,20 @@ fun LoginScreen(
         }
     }
     //Sign In With Google
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            try {
-                val credentials =
-                    authVM.oneTapClient.getSignInCredentialFromIntent(result.data)
-                val googleIdToken = credentials.googleIdToken
-                val googleCredentials = GoogleAuthProvider.getCredential(googleIdToken, null)
-                authVM.signInWithGoogle(googleCredentials)
-            } catch (it: ApiException) {
-                print(it)
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                try {
+                    val credentials =
+                        authVM.oneTapClient.getSignInCredentialFromIntent(result.data)
+                    val googleIdToken = credentials.googleIdToken
+                    val googleCredentials = GoogleAuthProvider.getCredential(googleIdToken, null)
+                    authVM.signInWithGoogle(googleCredentials)
+                } catch (it: ApiException) {
+                    print(it)
+                }
             }
         }
-    }
 
     fun launch(signInResult: BeginSignInResult) {
         val intent = IntentSenderRequest.Builder(signInResult.pendingIntent.intentSender).build()
@@ -390,7 +401,11 @@ fun LoginScreen(
         }
 
         is Response.Failure -> LaunchedEffect(Unit) {
-            Toast.makeText(currentContext, oneTapSignInResponse.e.message.toString(), Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                currentContext,
+                oneTapSignInResponse.e.message.toString(),
+                Toast.LENGTH_SHORT
+            ).show()
             print(oneTapSignInResponse.e)
         }
     }
@@ -410,7 +425,6 @@ fun LoginScreen(
         }
     }
 }
-
 
 
 @Preview(showBackground = true)

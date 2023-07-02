@@ -66,6 +66,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
@@ -400,7 +401,6 @@ fun CreateProfileScreen(
                 )
             }
 
-
             Spacer(modifier = Modifier.height(30.dp))
 
             //Create Profile
@@ -433,7 +433,18 @@ fun CreateProfileScreen(
                                 progressBarState =
                                     if (firebaseVM.uploadImageToFirebaseStorage(imageUri = selectedImageUri!!) == SuccessImageUpload(
                                             true
-                                        ) && firebaseVM.uploadUser(userProfile) == SuccessUserUpload(
+                                        ) && firebaseVM.uploadUser(
+                                            UserProfile(
+                                                dateCreated = Calendar.getInstance().timeInMillis.toString(),
+                                                email = authVM.auth.currentUser!!.email.toString()
+                                                    .trimEnd(),
+                                                name = username,
+                                                age = age.toString(),
+                                                gender = genderFilterTerm,
+                                                province = selectedProvince,
+                                                profileImageUrl = firebaseVM.imageUrl.value.toString()
+                                            )
+                                        ) == SuccessUserUpload(
                                             true
                                         )
                                     ) {
@@ -486,7 +497,9 @@ fun CreateProfileScreen(
 @Preview(showBackground = true)
 @Composable
 private fun PreviewRegister() {
-    /*CreateProfileScreen(
+    CreateProfileScreen(
         navController = rememberNavController(),
-    )*/
+        firebaseVM = viewModel(),
+        authVM = viewModel()
+    )
 }

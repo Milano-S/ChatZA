@@ -21,8 +21,8 @@ import com.mil.chatza.ui.theme.chatZaBrown
 
 @Composable
 fun HomePage(navController: NavHostController) {
-    val bottomNavScreens = listOf(Screen.HomeScreen, Screen.SettingsScreen, Screen.ProfileScreen)
 
+    val bottomNavScreens = listOf(Screen.HomeScreen, Screen.SettingsScreen, Screen.ProfileScreen)
     var currentScreen by remember {
         mutableStateOf(Screen.HomeScreen.route)
     }

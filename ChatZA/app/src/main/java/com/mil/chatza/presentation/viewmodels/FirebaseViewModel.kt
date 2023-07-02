@@ -70,6 +70,7 @@ class FirebaseViewModel : ViewModel() {
         return downloadUrl.result.toString()
     }
 
+    //Get Profile Details
     suspend fun getProfileDetails(email: String) : UserProfile {
         var profileDetails = UserProfile()
         val userList = firebaseUsers.get().await()
