@@ -112,7 +112,7 @@ fun CreateProfileScreen(
 
 
     var selectedImageUri by remember {
-        mutableStateOf<Uri?>(Uri.parse(""))
+        mutableStateOf<Uri?>(null)
     }
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -430,10 +430,7 @@ fun CreateProfileScreen(
                                 ).show()
                                 progressBarState = false
                             } else {
-                                progressBarState =
-                                    if (firebaseVM.uploadImageToFirebaseStorage(imageUri = selectedImageUri!!) == SuccessImageUpload(
-                                            true
-                                        ) && firebaseVM.uploadUser(
+                                 if (firebaseVM.uploadImageToFirebaseStorage(imageUri = selectedImageUri) == SuccessImageUpload(true) && firebaseVM.uploadUser(
                                             UserProfile(
                                                 dateCreated = Calendar.getInstance().timeInMillis.toString(),
                                                 email = authVM.auth.currentUser!!.email.toString()
@@ -444,9 +441,7 @@ fun CreateProfileScreen(
                                                 province = selectedProvince,
                                                 profileImageUrl = firebaseVM.imageUrl.value.toString()
                                             )
-                                        ) == SuccessUserUpload(
-                                            true
-                                        )
+                                        ) == SuccessUserUpload(true)
                                     ) {
                                         //User Upload Success
                                         Toast.makeText(
@@ -454,17 +449,15 @@ fun CreateProfileScreen(
                                             "Profile Successfully Created",
                                             Toast.LENGTH_SHORT
                                         ).show()
-                                        //Profile Image Upload
-
                                         navController.navigate(Screen.DisclaimerPage.route)
-                                        false
+                                        progressBarState = false
                                     } else {
                                         Toast.makeText(
                                             currentContext,
                                             firebaseVM.userUploadException.value?.message.toString(),
                                             Toast.LENGTH_SHORT
                                         ).show()
-                                        false
+                                        progressBarState = false
                                     }
                             }
                         }

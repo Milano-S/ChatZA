@@ -16,11 +16,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import com.mil.chatza.presentation.navigation.Screen
+import com.mil.chatza.presentation.screens.homeScreens.ProfileScreen
+import com.mil.chatza.presentation.viewmodels.AuthViewModel
+import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
 import com.mil.chatza.ui.theme.chatZaBlue
 import com.mil.chatza.ui.theme.chatZaBrown
 
 @Composable
-fun HomePage(navController: NavHostController) {
+fun HomePage(navController: NavHostController, authVM : AuthViewModel, firebaseVM :FirebaseViewModel) {
 
     val bottomNavScreens = listOf(Screen.HomeScreen, Screen.SettingsScreen, Screen.ProfileScreen)
     var currentScreen by remember {
@@ -56,7 +59,7 @@ fun HomePage(navController: NavHostController) {
         when (currentScreen) {
             Screen.HomeScreen.route -> HomeScreen()
             Screen.SettingsScreen.route -> SearchScreen()
-            Screen.ProfileScreen.route -> ProfileScreen()
+            Screen.ProfileScreen.route -> ProfileScreen(authVM, firebaseVM)
         }
     }
 }

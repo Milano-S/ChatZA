@@ -49,7 +49,10 @@ class FirebaseViewModel : ViewModel() {
     var imageUploadException : LiveData<Exception> = _imageUploadException
     private var _imageUrl = MutableLiveData<String>()
     var imageUrl : LiveData<String> =  _imageUrl
-    suspend fun uploadImageToFirebaseStorage(imageUri: Uri) : UploadImageResult {
+    suspend fun uploadImageToFirebaseStorage(imageUri: Uri?) : UploadImageResult {
+        if (imageUri == null){
+            return SuccessImageUpload(true)
+        }
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
         val imagesRef = storageRef.child("$profileImages/${imageUri.lastPathSegment}")
@@ -63,11 +66,11 @@ class FirebaseViewModel : ViewModel() {
             FailureImageUpload(e)
         }
     }
-    fun getDownloadUrlFromGsUrl(gsUrl: String): String {
+    suspend fun getDownloadUrlFromGsUrl(gsUrl: String): String {
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.getReferenceFromUrl(gsUrl)
         val downloadUrl = storageRef.downloadUrl
-        return downloadUrl.result.toString()
+        return downloadUrl.await().toString()
     }
 
     //Get Profile Details

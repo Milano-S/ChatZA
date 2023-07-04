@@ -2,7 +2,7 @@ package com.mil.chatza.presentation.navigation
 
 import HomePage
 import HomeScreen
-import ProfileScreen
+import com.mil.chatza.presentation.screens.homeScreens.ProfileScreen
 import SearchScreen
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -37,7 +37,7 @@ fun NavGraph(
         ) {
             //Home Page
             composable(Screen.HomePage.route) {
-                HomePage(navController = navController)
+                HomePage(navController = navController, firebaseVM = firebaseViewModel, authVM = authVM)
             }
 
             //Home Screen
@@ -46,7 +46,7 @@ fun NavGraph(
             }
 
             composable(Screen.SettingsScreen.route){
-                ProfileScreen()
+                ProfileScreen(firebaseVM = firebaseViewModel, authVM = authVM)
             }
 
             composable(Screen.ProfileScreen.route){

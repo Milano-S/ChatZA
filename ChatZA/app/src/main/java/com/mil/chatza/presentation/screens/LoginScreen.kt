@@ -242,34 +242,61 @@ fun LoginScreen(
                         progressBarState = true
                         scope.launch {
                             try {
-                                if (authVM.logIn(email = email.trimEnd(), password = password.trimEnd()) == SuccessLogin(true)) {
+                                if (authVM.logIn(
+                                        email = email.trimEnd(),
+                                        password = password.trimEnd()
+                                    ) == SuccessLogin(true)
+                                ) {
                                     //Login Success
                                     val currentUser = authVM.auth.currentUser!!
                                     if (!currentUser.isEmailVerified) {
                                         //Not Verified
-                                        Toast.makeText(currentContext, "Login Successful", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            currentContext,
+                                            "Login Successful",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         navController.navigate(Screen.VerifyEmailPage.route)
-                                    } else if (currentUser.isEmailVerified && firebaseVM.getProfileDetails(currentUser.email.toString()).name != "") {
+                                    } else if (currentUser.isEmailVerified && firebaseVM.getProfileDetails(
+                                            currentUser.email.toString()
+                                        ).name != ""
+                                    ) {
                                         //Verified and has Profile
-                                        Toast.makeText(currentContext, "Sign In Success", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            currentContext,
+                                            "Sign In Success",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         navController.navigate(route = Consts.Companion.Graph.MAIN)
                                     } else {
                                         //Verified and no Profile
-                                        Toast.makeText(currentContext, "Logged In and Verified", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            currentContext,
+                                            "Logged In and Verified",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         navController.navigate(Screen.CreateProfilePage.route)
                                     }
-                                }else{
+                                } else {
                                     //Login Failure
                                     email = ""
                                     password = ""
-                                    Toast.makeText(currentContext, authVM.loginException.value?.message.toString(), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        currentContext,
+                                        authVM.loginException.value?.message.toString(),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                     progressBarState = false
                                 }
                             } catch (e: Exception) {
                                 //Login Exception
                                 email = ""
                                 password = ""
-                                Toast.makeText(currentContext, e.message.toString(), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    currentContext,
+                                    e.message.toString(),
+                                    Toast.LENGTH_SHORT
+                                ).show()
                                 progressBarState = false
                             }
                         }
@@ -318,12 +345,12 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 50.dp),
-                horizontalArrangement = SpaceBetween
+                horizontalArrangement = Arrangement.Center
             ) {
-                listOf("Google", "Facebook").forEach {
+                listOf("Google").forEach {
                     Card(
                         modifier = Modifier
-                            .background(Color.White),
+                            .background(Color.Transparent),
                         shape = RoundedCornerShape(15.dp),
                         border = BorderStroke(0.5.dp, Color.DarkGray)
                     ) {
@@ -333,13 +360,7 @@ fun LoginScreen(
                                 .wrapContentWidth()
                                 .background(chatZaBrown)
                                 .clickable {
-                                    when (it) {
-                                        "Google" -> {
-                                            authVM.oneTapSignIn()
-                                        }
-
-                                        "Facebook" -> {}
-                                    }
+                                    authVM.oneTapSignIn()
                                 },
                             horizontalArrangement = Start
                         ) {
@@ -401,11 +422,6 @@ fun LoginScreen(
         }
 
         is Response.Failure -> LaunchedEffect(Unit) {
-            Toast.makeText(
-                currentContext,
-                oneTapSignInResponse.e.message.toString(),
-                Toast.LENGTH_SHORT
-            ).show()
             print(oneTapSignInResponse.e)
         }
     }

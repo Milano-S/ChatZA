@@ -65,7 +65,8 @@ fun SplashScreen(
         scope.launch {
             try {
                 val currentUser = authVM.auth.currentUser
-                if (currentUser != null && currentUser.isEmailVerified) {
+                //User Exists, Verified and has Profile
+                if (currentUser != null && currentUser.isEmailVerified && firebaseVM.getProfileDetails(currentUser.email.toString()).name != "") {
                     navController.navigate(Consts.Companion.Graph.MAIN)
                 }else{
                     navController.navigate(Screen.LoginPage.route)
