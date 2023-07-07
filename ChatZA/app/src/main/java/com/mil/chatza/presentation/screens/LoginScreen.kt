@@ -4,6 +4,7 @@ import android.app.Activity
 import android.net.Uri
 import android.util.Patterns
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -109,7 +110,13 @@ fun LoginScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-
+        //Back Button
+        BackHandler(enabled = true) {
+            if (currentContext is Activity){
+                currentContext.moveTaskToBack(true)
+            }
+        }
+        
         Column(
             modifier = Modifier
                 .background(

@@ -2,6 +2,7 @@ package com.mil.chatza.presentation.screens.homeScreens
 
 import android.net.Uri
 import android.util.Log
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -63,9 +64,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.google.android.play.integrity.internal.f
 import com.mil.chatza.R
 import com.mil.chatza.core.utils.Consts
+import com.mil.chatza.domain.model.SuccessGsUrl
 import com.mil.chatza.domain.model.UserProfile
+import com.mil.chatza.domain.repository.UserProfileRepositoryImp.Companion.age
 import com.mil.chatza.presentation.components.ProgressBar
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
 import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
@@ -75,6 +79,7 @@ import kotlinx.coroutines.runBlocking
 
 
 private const val TAG = "ProfileScreen"
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ProfileScreen(
@@ -107,14 +112,6 @@ fun ProfileScreen(
     var expanded by remember { mutableStateOf(false) }
     var selectedProvince by remember { mutableStateOf(currentUserProfile.province) }
 
-    var selectedImageUri by remember {
-        mutableStateOf<Uri?>(null)
-    }
-
-    val photoPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { selectedImageUri = it }
-    )
 
     Surface(
         modifier = Modifier
@@ -180,26 +177,13 @@ fun ProfileScreen(
             ) {
 
                 AsyncImage(
-                    model = selectedImageUri,
+                    model = firebaseVM.replaceEncodedColon(currentUserProfile.profileImageUrl),
                     contentScale = ContentScale.Crop,
                     placeholder = painterResource(id = R.drawable.profile_2),
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable {
-                            try {
-                                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            } catch (e: Exception) {
-                                Log.i(TAG, e.message.toString())
-                                Toast
-                                    .makeText(
-                                        currentContext,
-                                        e.message.toString(),
-                                        Toast.LENGTH_SHORT
-                                    )
-                                    .show()
-                            }
-                        },
+                        .clickable {  },
                     fallback = painterResource(id = R.drawable.profile_2)
                 )
             }
