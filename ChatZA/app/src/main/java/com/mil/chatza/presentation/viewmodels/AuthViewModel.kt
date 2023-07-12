@@ -25,6 +25,7 @@ import com.mil.chatza.domain.model.SuccessLogin
 import com.mil.chatza.domain.repository.AuthRepository
 import com.mil.chatza.domain.repository.OneTapSignInResponse
 import com.mil.chatza.domain.repository.SignInWithGoogleResponse
+import com.mil.chatza.domain.repository.SignOutResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -56,6 +57,14 @@ class AuthViewModel @Inject constructor(
     fun signInWithGoogle(googleCredential: AuthCredential) = viewModelScope.launch {
         oneTapSignInResponse = Response.Loading
         signInWithGoogleResponse = repo.firebaseSignInWithGoogle(googleCredential)
+    }
+
+    //Sign Out
+    var signOutResponse by mutableStateOf<SignOutResponse>(Response.Success(false))
+        private set
+    fun signOut() = viewModelScope.launch {
+        signOutResponse = Response.Loading
+        signOutResponse = repo.signOut()
     }
 
     //Sign Up

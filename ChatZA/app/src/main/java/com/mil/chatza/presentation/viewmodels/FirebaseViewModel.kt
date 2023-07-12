@@ -13,8 +13,11 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.mil.chatza.core.utils.Consts
 import com.mil.chatza.core.utils.Consts.Companion.profileImages
+import com.mil.chatza.domain.model.FailureGsUrl
 import com.mil.chatza.domain.model.FailureImageUpload
 import com.mil.chatza.domain.model.FailureUserUpload
+import com.mil.chatza.domain.model.GsUrlResult
+import com.mil.chatza.domain.model.SuccessGsUrl
 import com.mil.chatza.domain.model.SuccessImageUpload
 import com.mil.chatza.domain.model.SuccessUserUpload
 import com.mil.chatza.domain.model.UploadImageResult
@@ -49,11 +52,15 @@ class FirebaseViewModel : ViewModel() {
     var imageUploadException : LiveData<Exception> = _imageUploadException
     private var _imageUrl = MutableLiveData<String>()
     var imageUrl : LiveData<String> =  _imageUrl
-    suspend fun uploadImageToFirebaseStorage(imageUri: Uri) : UploadImageResult {
+    suspend fun uploadImageToFirebaseStorage(imageUri: Uri?) : UploadImageResult {
+        if (imageUri == null){
+            return SuccessImageUpload(true)
+        }
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
         val imagesRef = storageRef.child("$profileImages/${imageUri.lastPathSegment}")
         val uploadTask = imagesRef.putFile(imageUri)
+        val imageUrl = imagesRef.getFile(imageUri)
         return try {
             uploadTask.await()
             _imageUrl.value = imagesRef.toString()
@@ -63,12 +70,30 @@ class FirebaseViewModel : ViewModel() {
             FailureImageUpload(e)
         }
     }
-    fun getDownloadUrlFromGsUrl(gsUrl: String): String {
-        val storage = FirebaseStorage.getInstance()
-        val storageRef = storage.getReferenceFromUrl(gsUrl)
-        val downloadUrl = storageRef.downloadUrl
-        return downloadUrl.result.toString()
-    }
+
+    //GsUrl
+    private var _gsImageUrlException = MutableLiveData<Exception>()
+    var gsImageUrlException : LiveData<Exception> = _gsImageUrlException
+    private var _gsImageUrl = MutableLiveData<String>()
+    var gsImageUrl : LiveData<String> = _gsImageUrl
+   /* private suspend fun getDownloadUrlFromGsUrl(gsUrl: String): GsUrlResult {
+        return try {
+            val storage = FirebaseStorage.getInstance()
+            val storageRef = storage.getReferenceFromUrl(gsUrl)
+            val downloadUrl = storageRef.downloadUrl
+            _gsImageUrl.value = downloadUrl.await().toString()
+            return SuccessGsUrl(true)
+        }catch (e : Exception){
+            _gsImageUrlException.value = e
+            FailureGsUrl(e)
+        }
+    }*/
+   suspend fun getDownloadUrlFromGsUrl(gsUrl: String): String {
+       val storage = FirebaseStorage.getInstance()
+       val storageRef = storage.getReferenceFromUrl(gsUrl)
+       val downloadUrl = storageRef.downloadUrl
+       return downloadUrl.await().toString()
+   }
 
     //Get Profile Details
     suspend fun getProfileDetails(email: String) : UserProfile {
@@ -81,6 +106,9 @@ class FirebaseViewModel : ViewModel() {
             }
         }
         return profileDetails
+    }
+    fun replaceEncodedColon(input: String): String {
+        return input.replace("%3A", ":")
     }
 
     //Check if Email in Use
@@ -97,4 +125,3 @@ class FirebaseViewModel : ViewModel() {
     }
 
 }
-

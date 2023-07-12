@@ -1,8 +1,8 @@
 package com.mil.chatza.presentation.navigation
 
 import HomePage
-import HomeScreen
-import ProfileScreen
+import com.mil.chatza.presentation.screens.homeScreens.HomeScreen
+import com.mil.chatza.presentation.screens.homeScreens.ProfileScreen
 import SearchScreen
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -37,19 +37,23 @@ fun NavGraph(
         ) {
             //Home Page
             composable(Screen.HomePage.route) {
-                HomePage(navController = navController)
+                HomePage(
+                    navController = navController,
+                    firebaseVM = firebaseViewModel,
+                    authVM = authVM
+                )
             }
 
             //Home Screen
-            composable(Screen.HomeScreen.route){
-                HomeScreen()
+            composable(Screen.HomeScreen.route) {
+                HomeScreen(navController = navController, authVM = authVM)
             }
 
-            composable(Screen.SettingsScreen.route){
-                ProfileScreen()
+            composable(Screen.SettingsScreen.route) {
+                ProfileScreen(firebaseVM = firebaseViewModel, authVM = authVM)
             }
 
-            composable(Screen.ProfileScreen.route){
+            composable(Screen.ProfileScreen.route) {
                 SearchScreen()
             }
         }
@@ -61,12 +65,20 @@ fun NavGraph(
         ) {
             //Splash
             composable(Screen.SplashPage.route) {
-                SplashScreen(navController = navController, authVM = authVM, firebaseVM = firebaseViewModel)
+                SplashScreen(
+                    navController = navController,
+                    authVM = authVM,
+                    firebaseVM = firebaseViewModel
+                )
             }
 
             //Login
             composable(Screen.LoginPage.route) {
-                LoginScreen(navController = navController, authVM = authVM, firebaseVM = firebaseViewModel)
+                LoginScreen(
+                    navController = navController,
+                    authVM = authVM,
+                    firebaseVM = firebaseViewModel
+                )
             }
 
             //Register

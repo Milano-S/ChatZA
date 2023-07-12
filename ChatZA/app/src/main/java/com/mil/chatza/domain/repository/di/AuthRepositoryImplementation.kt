@@ -10,6 +10,7 @@ import com.mil.chatza.domain.model.Response
 import com.mil.chatza.domain.repository.AuthRepository
 import com.mil.chatza.domain.repository.OneTapSignInResponse
 import com.mil.chatza.domain.repository.SignInWithGoogleResponse
+import com.mil.chatza.domain.repository.SignOutResponse
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Named
@@ -25,7 +26,7 @@ class AuthRepositoryImplementation @Inject constructor(
     private var signUpRequest: BeginSignInRequest,
     private var signInClient: GoogleSignInClient,
 
-) : AuthRepository {
+    ) : AuthRepository {
 
     override val isUserAuthenticatedInFirebase = auth.currentUser != null
     override val currentUser get() = auth.currentUser
@@ -57,4 +58,15 @@ class AuthRepositoryImplementation @Inject constructor(
             Response.Failure(e)
         }
     }
+
+    override suspend fun signOut(): SignOutResponse {
+        return try {
+            oneTapClient.signOut().await()
+            auth.signOut()
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
 }
