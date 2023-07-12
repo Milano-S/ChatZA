@@ -111,7 +111,7 @@ fun ProfileScreen(
     var genderFilterTerm by remember { mutableStateOf(currentUserProfile.gender) }
     var expanded by remember { mutableStateOf(false) }
     var selectedProvince by remember { mutableStateOf(currentUserProfile.province) }
-
+    var isEditProfileEnabled by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier
@@ -177,13 +177,18 @@ fun ProfileScreen(
             ) {
 
                 AsyncImage(
-                    model = firebaseVM.replaceEncodedColon(currentUserProfile.profileImageUrl),
+                    //model = firebaseVM.replaceEncodedColon(currentUserProfile.profileImageUrl),
+                    model = if (currentUserProfile.profileImageUrl != "") runBlocking {
+                        firebaseVM.getDownloadUrlFromGsUrl(
+                            firebaseVM.replaceEncodedColon(currentUserProfile.profileImageUrl)
+                        )
+                    } else null,
                     contentScale = ContentScale.Crop,
                     placeholder = painterResource(id = R.drawable.profile_2),
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable {  },
+                        .clickable { },
                     fallback = painterResource(id = R.drawable.profile_2)
                 )
             }

@@ -238,6 +238,19 @@ fun LoginScreen(
                         .fillMaxWidth()
                 )
             }
+            Text(
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(horizontal = 20.dp)
+                    .clickable { },
+                textAlign = TextAlign.End,
+                text = "Forgot Password",
+                style = TextStyle(
+                    fontSize = 13.sp,
+                    fontFamily = FontFamily.Default,
+                    color = chatZaBlue
+                )
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -393,6 +406,9 @@ fun LoginScreen(
                     }
                 }
             }
+
+
+
         }
         when (progressBarState) {
             true -> ProgressBar()
