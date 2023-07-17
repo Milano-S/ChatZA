@@ -13,4 +13,5 @@ sealed class Screen(
     object HomeScreen : Screen("Home")
     object SettingsScreen : Screen("settings_page")
     object ProfileScreen : Screen("Profile")
+    object ForgotPasswordScreen : Screen("forgot_password_screens")
 }

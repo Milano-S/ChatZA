@@ -24,6 +24,7 @@ import com.mil.chatza.domain.model.SuccessEmailAuth
 import com.mil.chatza.domain.model.SuccessLogin
 import com.mil.chatza.domain.repository.AuthRepository
 import com.mil.chatza.domain.repository.OneTapSignInResponse
+import com.mil.chatza.domain.repository.SendPasswordResetEmailResponse
 import com.mil.chatza.domain.repository.SignInWithGoogleResponse
 import com.mil.chatza.domain.repository.SignOutResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -46,6 +47,13 @@ class AuthViewModel @Inject constructor(
         private set
     var signInWithGoogleResponse by mutableStateOf<SignInWithGoogleResponse>(Response.Success(false))
         private set
+    var sendPasswordResetEmailResponse by mutableStateOf<SendPasswordResetEmailResponse>(
+        Response.Success(
+            false
+        )
+    )
+
+
     fun oneTapSignIn(){
         viewModelScope.launch {
             oneTapSignInResponse = Response.Loading
@@ -57,6 +65,12 @@ class AuthViewModel @Inject constructor(
     fun signInWithGoogle(googleCredential: AuthCredential) = viewModelScope.launch {
         oneTapSignInResponse = Response.Loading
         signInWithGoogleResponse = repo.firebaseSignInWithGoogle(googleCredential)
+    }
+
+    //Forgot Password
+    fun sendPasswordResetEmail(email: String) = viewModelScope.launch {
+        sendPasswordResetEmailResponse = Response.Loading
+        sendPasswordResetEmailResponse = repo.sendPasswordResetEmail(email)
     }
 
     //Sign Out

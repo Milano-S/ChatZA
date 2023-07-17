@@ -112,11 +112,11 @@ fun LoginScreen(
     ) {
         //Back Button
         BackHandler(enabled = true) {
-            if (currentContext is Activity){
+            if (currentContext is Activity) {
                 currentContext.moveTaskToBack(true)
             }
         }
-        
+
         Column(
             modifier = Modifier
                 .background(
@@ -242,7 +242,7 @@ fun LoginScreen(
                 modifier = Modifier
                     .align(Alignment.End)
                     .padding(horizontal = 20.dp)
-                    .clickable { },
+                    .clickable { navController.navigate(Screen.ForgotPasswordScreen.route) },
                 textAlign = TextAlign.End,
                 text = "Forgot Password",
                 style = TextStyle(
@@ -406,7 +406,6 @@ fun LoginScreen(
                     }
                 }
             }
-
 
 
         }

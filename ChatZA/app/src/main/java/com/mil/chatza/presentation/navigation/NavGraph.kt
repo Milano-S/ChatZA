@@ -12,6 +12,7 @@ import androidx.navigation.navigation
 import com.mil.chatza.core.utils.Consts
 import com.mil.chatza.presentation.screens.CreateProfileScreen
 import com.mil.chatza.presentation.screens.DisclaimerScreen
+import com.mil.chatza.presentation.screens.ForgotPasswordScreen
 import com.mil.chatza.presentation.screens.LoginScreen
 import com.mil.chatza.presentation.screens.RegisterScreen
 import com.mil.chatza.presentation.screens.SplashScreen
@@ -105,6 +106,10 @@ fun NavGraph(
                 DisclaimerScreen(navController = navController)
             }
 
+            //Forgot Password
+            composable(Screen.ForgotPasswordScreen.route){
+                ForgotPasswordScreen(navController = navController, authVM = authVM)
+            }
         }
     }
 }

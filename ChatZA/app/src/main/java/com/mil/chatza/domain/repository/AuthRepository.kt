@@ -11,6 +11,7 @@ import com.mil.chatza.domain.model.Response
 typealias OneTapSignInResponse = Response<BeginSignInResult>
 typealias SignInWithGoogleResponse = Response<Boolean>
 typealias SignOutResponse = Response<Boolean>
+typealias SendPasswordResetEmailResponse = Response<Boolean>
 
 interface AuthRepository {
 
@@ -19,6 +20,7 @@ interface AuthRepository {
 
     suspend fun oneTapSignInWithGoogle(): OneTapSignInResponse
     suspend fun firebaseSignInWithGoogle(googleCredential: AuthCredential): SignInWithGoogleResponse
-
     suspend fun signOut(): SignOutResponse
+    suspend fun sendPasswordResetEmail(email: String): SendPasswordResetEmailResponse
+
 }
