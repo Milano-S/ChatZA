@@ -1,7 +1,9 @@
 package com.mil.chatza.presentation.screens
 
+import android.app.Activity
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -83,6 +85,12 @@ fun VerifyEmailScreen(navController: NavHostController, authVM: AuthViewModel) {
         modifier = Modifier
             .fillMaxSize()
     ) {
+        //Back Button
+        BackHandler(enabled = true) {
+            if (currentContext is Activity) {
+                currentContext.moveTaskToBack(true)
+            }
+        }
 
         Column(
             modifier = Modifier

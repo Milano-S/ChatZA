@@ -69,7 +69,11 @@ fun HomePage(navController: NavHostController, authVM : AuthViewModel, firebaseV
         when (currentScreen) {
             Screen.HomeScreen.route -> HomeScreen(navController = navController, authVM = authVM)
             Screen.SettingsScreen.route -> SearchScreen()
-            Screen.ProfileScreen.route -> ProfileScreen(authVM, firebaseVM)
+            Screen.ProfileScreen.route -> ProfileScreen(
+                navController = navController,
+                authVM = authVM,
+                firebaseVM = firebaseVM
+            )
         }
     }
 }

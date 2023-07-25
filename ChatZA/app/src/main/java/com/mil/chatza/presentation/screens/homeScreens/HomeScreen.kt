@@ -32,6 +32,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarColors
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -48,6 +50,7 @@ import com.mil.chatza.R
 import com.mil.chatza.core.utils.Consts
 import com.mil.chatza.presentation.navigation.Screen
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
+import com.mil.chatza.ui.theme.chatZaBrown
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -68,7 +71,7 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = "Drawer Sample")
+                    Text(text = "ChatZA")
                 },
                 navigationIcon = {
                     IconButton(
@@ -83,7 +86,10 @@ fun HomeScreen(
                             contentDescription = ""
                         )
                     }
-                })
+                }, colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = chatZaBrown
+                )
+            )
         },
 
         drawerContent = { DrawerView(currentContext, scaffoldState, scope, authVM, navController) },
@@ -102,9 +108,7 @@ private fun DrawerView(
 ) {
     val language = listOf("Settings", "Info", "Log Out")
     LazyColumn {
-        item {
-            AddDrawerHeader()
-        }
+        item { AddDrawerHeader() }
         items(language.size) { index ->
 
             AddDrawerContentView(
@@ -118,7 +122,7 @@ private fun DrawerView(
                             Toast.makeText(context, "Logged Out", Toast.LENGTH_SHORT).show()
                         }
 
-                        else -> {}
+                        else -> { Toast.makeText(context, language[index], Toast.LENGTH_SHORT).show() }
                     }
                 }
             )

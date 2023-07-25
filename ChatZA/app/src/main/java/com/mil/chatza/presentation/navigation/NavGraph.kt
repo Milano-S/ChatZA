@@ -12,6 +12,7 @@ import androidx.navigation.navigation
 import com.mil.chatza.core.utils.Consts
 import com.mil.chatza.presentation.screens.CreateProfileScreen
 import com.mil.chatza.presentation.screens.DisclaimerScreen
+import com.mil.chatza.presentation.screens.EditProfileScreen
 import com.mil.chatza.presentation.screens.ForgotPasswordScreen
 import com.mil.chatza.presentation.screens.LoginScreen
 import com.mil.chatza.presentation.screens.RegisterScreen
@@ -51,7 +52,19 @@ fun NavGraph(
             }
 
             composable(Screen.SettingsScreen.route) {
-                ProfileScreen(firebaseVM = firebaseViewModel, authVM = authVM)
+                ProfileScreen(
+                    navController = navController,
+                    firebaseVM = firebaseViewModel,
+                    authVM = authVM
+                )
+            }
+
+            composable(Screen.EditProfileScreen.route){
+                EditProfileScreen(
+                    navController = navController,
+                    authVM = authVM,
+                    firebaseVM = firebaseViewModel
+                )
             }
 
             composable(Screen.ProfileScreen.route) {
@@ -107,7 +120,7 @@ fun NavGraph(
             }
 
             //Forgot Password
-            composable(Screen.ForgotPasswordScreen.route){
+            composable(Screen.ForgotPasswordScreen.route) {
                 ForgotPasswordScreen(navController = navController, authVM = authVM)
             }
         }

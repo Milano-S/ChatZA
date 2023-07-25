@@ -23,6 +23,7 @@ import com.mil.chatza.domain.model.SuccessUserUpload
 import com.mil.chatza.domain.model.UploadImageResult
 import com.mil.chatza.domain.model.UploadUserResult
 import com.mil.chatza.domain.model.UserProfile
+import com.mil.chatza.domain.repository.UserProfileRepositoryImp.Companion.email
 import kotlinx.coroutines.tasks.await
 
 private const val TAG = "FirebaseViewModel"
@@ -46,6 +47,15 @@ class FirebaseViewModel : ViewModel() {
             FailureUserUpload(e)
         }
     }
+
+    //Edit User
+    private var _editUserException = MutableLiveData<Exception>()
+    var editUserException : LiveData<Exception> = _editUserException
+    suspend fun editUserDetails(user : UserProfile){
+        val userList = firebaseUsers.get().await()
+
+    }
+
 
     //Upload Profile Image
     private var _imageUploadException = MutableLiveData<Exception>()
