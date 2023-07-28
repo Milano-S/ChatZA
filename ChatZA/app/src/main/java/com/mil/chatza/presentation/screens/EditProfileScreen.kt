@@ -1,6 +1,11 @@
 package com.mil.chatza.presentation.screens
 
+import android.net.Uri
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -68,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.google.android.play.integrity.internal.c
 import com.mil.chatza.R
 import com.mil.chatza.core.utils.Consts
 import com.mil.chatza.domain.model.SuccessImageUpload
@@ -105,12 +111,26 @@ fun EditProfileScreen(
         return profile
     }
 
-
     var username by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var genderFilterTerm by remember { mutableStateOf("") }
     var selectedProvince by remember { mutableStateOf("") }
     var currentUserProfile by remember { mutableStateOf(UserProfile()) }
+
+    var selectedImageUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { selectedImageUri = it }
+    )
+
+    var imageUri = if (currentUserProfile.profileImageUrl != "") runBlocking {
+        firebaseVM.getDownloadUrlFromGsUrl(
+            firebaseVM.replaceEncodedColon(currentUserProfile.profileImageUrl)
+        )
+    } else null
+
     LaunchedEffect(Unit) {
         scope.launch {
             currentUserProfile = getUserDetails()
@@ -130,8 +150,8 @@ fun EditProfileScreen(
 
     fun validateEditProfileDetails(): Boolean {
         isUsernameError = username.isEmpty()
-        if (age.isNotEmpty()){
-            isAgeError = age.toInt() < 18
+        if (age.isNotEmpty()) {
+            isAgeError = age.trim().toInt() < 18
         }
         isProvinceError = selectedProvince == "Your Province"
         isGenderError = genderFilterTerm.isEmpty()
@@ -182,7 +202,7 @@ fun EditProfileScreen(
                         .size(40.dp)
                         .fillMaxHeight()
                         .padding(start = 10.dp)
-                        .clickable{ navController.popBackStack() },
+                        .clickable { navController.popBackStack() },
                     tint = Color.DarkGray,
                     contentDescription = null
                 )
@@ -219,17 +239,19 @@ fun EditProfileScreen(
             ) {
 
                 AsyncImage(
-                    model = if (currentUserProfile.profileImageUrl != "") runBlocking {
-                        firebaseVM.getDownloadUrlFromGsUrl(
-                            firebaseVM.replaceEncodedColon(currentUserProfile.profileImageUrl)
-                        )
-                    } else null,
+                    model = if (selectedImageUri == null)imageUri else selectedImageUri,
                     contentScale = ContentScale.Crop,
                     placeholder = painterResource(id = R.drawable.profile_2),
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable { },
+                        .clickable {
+                            try {
+                                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            } catch (e : Exception){
+                                Toast.makeText(currentContext, e.message.toString(), Toast.LENGTH_SHORT).show()
+                            }
+                        },
                     fallback = painterResource(id = R.drawable.profile_2)
                 )
             }
@@ -432,7 +454,29 @@ fun EditProfileScreen(
                 onClick = {
                     validateEditProfileDetails()
                     if (!isUsernameError && !isAgeError && !isProvinceError && !isGenderError) {
-
+                        progressBarState = true
+                        scope.launch {
+                            if (selectedImageUri != null){
+                                try {
+                                    firebaseVM.uploadImageToFirebaseStorage(selectedImageUri)
+                                }catch (e : Exception){
+                                    Toast.makeText(currentContext, e.message.toString(), Toast.LENGTH_SHORT).show()
+                                    Log.i(TAG, e.message.toString())
+                                }
+                            }
+                            firebaseVM.editUserDetails(
+                                oldUserDetails = getUserDetails(),
+                                newUserDetails = UserProfile(
+                                    age = age,
+                                    gender = genderFilterTerm,
+                                    name = username,
+                                    profileImageUrl = if (selectedImageUri == null)imageUri.toString() else firebaseVM.imageUrl.value.toString(),
+                                    province = selectedProvince
+                                )
+                            )
+                            progressBarState = false
+                            navController.popBackStack()
+                        }
                     }
                 },
                 shape = RoundedCornerShape(50.dp),
@@ -442,15 +486,12 @@ fun EditProfileScreen(
                     .height(50.dp)
                     .border(
                         border = BorderStroke(width = 0.5.dp, color = Color.DarkGray),
-                        shape = RoundedCornerShape(
-                            50.dp
-                        )
+                        shape = RoundedCornerShape(50.dp)
                     ),
                 colors = ButtonDefaults.buttonColors(containerColor = chatZaBrown)
             ) {
                 Text(text = "Edit Profile", fontSize = 15.sp, color = Color.DarkGray)
             }
-
         }
         when (progressBarState) {
             true -> ProgressBar()

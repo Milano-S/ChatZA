@@ -50,20 +50,54 @@ class FirebaseViewModel : ViewModel() {
 
     //Edit User
     private var _editUserException = MutableLiveData<Exception>()
-    var editUserException : LiveData<Exception> = _editUserException
-    suspend fun editUserDetails(user : UserProfile){
-        val userList = firebaseUsers.get().await()
+    var editUserException: LiveData<Exception> = _editUserException
+    suspend fun editUserDetails(oldUserDetails: UserProfile, newUserDetails : UserProfile) {
+        val userDataPath = getUserId(oldUserDetails)
+        firebaseUsers.document(userDataPath).get()
+            .addOnSuccessListener { document ->
+                val userData = document.toObject(UserProfile::class.java)
+                if (userData != null) {
+                    //Edit User Details
+                    try {
+                        firebaseUsers.document(userDataPath).update(
+                            "age", newUserDetails.age,
+                            "gender", newUserDetails.gender,
+                            "name", newUserDetails.name,
+                            "profileImageUrl", newUserDetails.profileImageUrl,
+                            "province", newUserDetails.province
+                        )
+                    } catch (e : Exception){
+                        Log.i(TAG, e.message.toString())
+                    }
+                    //firebaseUsers.document(userDataPath).set(newUserDetails)
+                }
+            }
+            .addOnFailureListener { exception ->
+                _editUserException.value = exception
+                Log.i(TAG, exception.message.toString())
+            }
+    }
 
+    private suspend fun getUserId(userEdit: UserProfile): String {
+        var userId = ""
+        val userList = firebaseUsers.get().await()
+        userList.forEach { user ->
+            val currentUser = user.toObject(UserProfile::class.java)
+            if (currentUser.email == userEdit.email) {
+                userId = user.id
+            }
+        }
+        return userId
     }
 
 
     //Upload Profile Image
     private var _imageUploadException = MutableLiveData<Exception>()
-    var imageUploadException : LiveData<Exception> = _imageUploadException
+    var imageUploadException: LiveData<Exception> = _imageUploadException
     private var _imageUrl = MutableLiveData<String>()
-    var imageUrl : LiveData<String> =  _imageUrl
-    suspend fun uploadImageToFirebaseStorage(imageUri: Uri?) : UploadImageResult {
-        if (imageUri == null){
+    var imageUrl: LiveData<String> = _imageUrl
+    suspend fun uploadImageToFirebaseStorage(imageUri: Uri?): UploadImageResult {
+        if (imageUri == null) {
             return SuccessImageUpload(true)
         }
         val storage = FirebaseStorage.getInstance()
@@ -75,38 +109,22 @@ class FirebaseViewModel : ViewModel() {
             uploadTask.await()
             _imageUrl.value = imagesRef.toString()
             SuccessImageUpload(true)
-        }  catch (e : Exception){
+        } catch (e: Exception) {
             _imageUploadException.value = e
             FailureImageUpload(e)
         }
     }
 
     //GsUrl
-    private var _gsImageUrlException = MutableLiveData<Exception>()
-    var gsImageUrlException : LiveData<Exception> = _gsImageUrlException
-    private var _gsImageUrl = MutableLiveData<String>()
-    var gsImageUrl : LiveData<String> = _gsImageUrl
-   /* private suspend fun getDownloadUrlFromGsUrl(gsUrl: String): GsUrlResult {
-        return try {
-            val storage = FirebaseStorage.getInstance()
-            val storageRef = storage.getReferenceFromUrl(gsUrl)
-            val downloadUrl = storageRef.downloadUrl
-            _gsImageUrl.value = downloadUrl.await().toString()
-            return SuccessGsUrl(true)
-        }catch (e : Exception){
-            _gsImageUrlException.value = e
-            FailureGsUrl(e)
-        }
-    }*/
-   suspend fun getDownloadUrlFromGsUrl(gsUrl: String): String {
-       val storage = FirebaseStorage.getInstance()
-       val storageRef = storage.getReferenceFromUrl(gsUrl)
-       val downloadUrl = storageRef.downloadUrl
-       return downloadUrl.await().toString()
-   }
+    suspend fun getDownloadUrlFromGsUrl(gsUrl: String): String {
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.getReferenceFromUrl(gsUrl)
+        val downloadUrl = storageRef.downloadUrl
+        return downloadUrl.await().toString()
+    }
 
     //Get Profile Details
-    suspend fun getProfileDetails(email: String) : UserProfile {
+    suspend fun getProfileDetails(email: String): UserProfile {
         var profileDetails = UserProfile()
         val userList = firebaseUsers.get().await()
         userList.forEach { user ->
@@ -117,6 +135,7 @@ class FirebaseViewModel : ViewModel() {
         }
         return profileDetails
     }
+
     fun replaceEncodedColon(input: String): String {
         return input.replace("%3A", ":")
     }

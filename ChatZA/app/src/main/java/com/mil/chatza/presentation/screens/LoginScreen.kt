@@ -281,12 +281,6 @@ fun LoginScreen(
                                             currentUser.email.toString()
                                         ).name != ""
                                     ) {
-                                        //Verified and has Profile
-                                        Toast.makeText(
-                                            currentContext,
-                                            "Sign In Success",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
                                         navController.navigate(route = Consts.Companion.Graph.MAIN)
                                     } else {
                                         //Verified and no Profile
