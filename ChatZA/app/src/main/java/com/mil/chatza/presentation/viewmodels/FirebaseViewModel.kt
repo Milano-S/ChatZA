@@ -1,10 +1,14 @@
 package com.mil.chatza.presentation.viewmodels
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.navigation.NavHostController
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.auth.User
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
@@ -48,10 +52,41 @@ class FirebaseViewModel : ViewModel() {
         }
     }
 
+    suspend fun deleteAccount(user: UserProfile) {
+        val userDataPath = getUserId(user)
+        firebaseUsers.document(userDataPath).get()
+            .addOnSuccessListener { document ->
+                val userData = document.toObject(UserProfile::class.java)
+                if (userData != null) {
+                    //Delete User Profile
+                    try {
+                        firebaseUsers.document(userDataPath).delete()
+                    } catch (e: Exception) {
+                        Log.i(TAG, e.message.toString())
+                    }
+                }
+            }
+            .addOnFailureListener { exception ->
+                _editUserException.value = exception
+                Log.i(TAG, exception.message.toString())
+            }
+    }
+
+     fun deleteProfileImage(gsUrl: String) {
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.getReferenceFromUrl(gsUrl)
+        storageRef.delete()
+            .addOnSuccessListener {
+                Log.i(TAG, "Profile Image Delete Successful")
+            }.addOnFailureListener { e ->
+                Log.i(TAG, e.message.toString())
+            }
+    }
+
     //Edit User
     private var _editUserException = MutableLiveData<Exception>()
     var editUserException: LiveData<Exception> = _editUserException
-    suspend fun editUserDetails(oldUserDetails: UserProfile, newUserDetails : UserProfile) {
+    suspend fun editUserDetails(oldUserDetails: UserProfile, newUserDetails: UserProfile) {
         val userDataPath = getUserId(oldUserDetails)
         firebaseUsers.document(userDataPath).get()
             .addOnSuccessListener { document ->
@@ -66,10 +101,9 @@ class FirebaseViewModel : ViewModel() {
                             "profileImageUrl", newUserDetails.profileImageUrl,
                             "province", newUserDetails.province
                         )
-                    } catch (e : Exception){
+                    } catch (e: Exception) {
                         Log.i(TAG, e.message.toString())
                     }
-                    //firebaseUsers.document(userDataPath).set(newUserDetails)
                 }
             }
             .addOnFailureListener { exception ->

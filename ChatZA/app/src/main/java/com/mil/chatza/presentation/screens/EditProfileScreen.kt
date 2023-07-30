@@ -41,6 +41,8 @@ import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -117,6 +119,9 @@ fun EditProfileScreen(
     var selectedProvince by remember { mutableStateOf("") }
     var currentUserProfile by remember { mutableStateOf(UserProfile()) }
 
+    var openDialog by remember { mutableStateOf(false) }
+    var confirmCount by remember { mutableStateOf(0) }
+
     var selectedImageUri by remember {
         mutableStateOf<Uri?>(null)
     }
@@ -125,11 +130,12 @@ fun EditProfileScreen(
         onResult = { selectedImageUri = it }
     )
 
-    var imageUri = if (currentUserProfile.profileImageUrl != "") runBlocking {
+    /*var imageUri = if (currentUserProfile.profileImageUrl != "") runBlocking {
         firebaseVM.getDownloadUrlFromGsUrl(
             firebaseVM.replaceEncodedColon(currentUserProfile.profileImageUrl)
         )
-    } else null
+    } else null*/
+    var imageUri by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         scope.launch {
@@ -138,6 +144,12 @@ fun EditProfileScreen(
             age = currentUserProfile.age
             genderFilterTerm = currentUserProfile.gender
             selectedProvince = currentUserProfile.province
+            if (currentUserProfile.profileImageUrl != ""){
+                imageUri = firebaseVM.getDownloadUrlFromGsUrl(
+                    firebaseVM.replaceEncodedColon(currentUserProfile.profileImageUrl)
+                )
+            }
+            progressBarState = false
         }
     }
 
@@ -218,9 +230,12 @@ fun EditProfileScreen(
                     textAlign = TextAlign.Center
                 )
                 Icon(
-                    Icons.Default.ArrowBack,
-                    modifier = Modifier.size(40.dp),
-                    tint = chatZaBlue,
+                    Icons.Default.Delete,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .padding(end = 10.dp)
+                        .clickable { openDialog = true },
+                    tint = Color.DarkGray,
                     contentDescription = null
                 )
             }
@@ -239,7 +254,7 @@ fun EditProfileScreen(
             ) {
 
                 AsyncImage(
-                    model = if (selectedImageUri == null)imageUri else selectedImageUri,
+                    model = if (selectedImageUri == null) imageUri else selectedImageUri,
                     contentScale = ContentScale.Crop,
                     placeholder = painterResource(id = R.drawable.profile_2),
                     contentDescription = null,
@@ -248,8 +263,14 @@ fun EditProfileScreen(
                         .clickable {
                             try {
                                 photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            } catch (e : Exception){
-                                Toast.makeText(currentContext, e.message.toString(), Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                Toast
+                                    .makeText(
+                                        currentContext,
+                                        e.message.toString(),
+                                        Toast.LENGTH_SHORT
+                                    )
+                                    .show()
                             }
                         },
                     fallback = painterResource(id = R.drawable.profile_2)
@@ -456,11 +477,15 @@ fun EditProfileScreen(
                     if (!isUsernameError && !isAgeError && !isProvinceError && !isGenderError) {
                         progressBarState = true
                         scope.launch {
-                            if (selectedImageUri != null){
+                            if (selectedImageUri != null) {
                                 try {
                                     firebaseVM.uploadImageToFirebaseStorage(selectedImageUri)
-                                }catch (e : Exception){
-                                    Toast.makeText(currentContext, e.message.toString(), Toast.LENGTH_SHORT).show()
+                                } catch (e: Exception) {
+                                    Toast.makeText(
+                                        currentContext,
+                                        e.message.toString(),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                     Log.i(TAG, e.message.toString())
                                 }
                             }
@@ -470,11 +495,16 @@ fun EditProfileScreen(
                                     age = age,
                                     gender = genderFilterTerm,
                                     name = username,
-                                    profileImageUrl = if (selectedImageUri == null)imageUri.toString() else firebaseVM.imageUrl.value.toString(),
+                                    profileImageUrl = if (selectedImageUri == null) imageUri.toString() else firebaseVM.imageUrl.value.toString(),
                                     province = selectedProvince
                                 )
                             )
                             progressBarState = false
+                            Toast.makeText(
+                                currentContext,
+                                "Profile Successfully Updated",
+                                Toast.LENGTH_SHORT
+                            ).show()
                             navController.popBackStack()
                         }
                     }
@@ -496,6 +526,50 @@ fun EditProfileScreen(
         when (progressBarState) {
             true -> ProgressBar()
             else -> {}
+        }
+        //Delete Profile
+        if (openDialog) {
+            AlertDialog(
+                onDismissRequest = { openDialog = false },
+                title = { Text(text = "Delete Account", color = Color.DarkGray) },
+                text = { Text("Are you sure that you want to delete your account ?", color = Color.DarkGray) },
+                confirmButton = {
+                    Button(onClick = {
+                        confirmCount++
+                        if (confirmCount == 1){
+                            Toast.makeText(currentContext, "Click again to delete account", Toast.LENGTH_SHORT).show()
+                        } else {
+                            //Delete Account
+                            progressBarState = true
+                            scope.launch {
+                                progressBarState = try {
+                                    firebaseVM.deleteAccount(currentUserProfile)
+                                    if (currentUserProfile.profileImageUrl != ""){
+                                        firebaseVM.deleteProfileImage(firebaseVM.replaceEncodedColon(currentUserProfile.profileImageUrl))
+                                    }
+                                    navController.navigate(Screen.LoginPage.route)
+                                    authVM.signOut()
+                                    false
+                                } catch (e : Exception){
+                                    Log.i(TAG, e.message.toString())
+                                    Toast.makeText(currentContext, e.message.toString(), Toast.LENGTH_SHORT).show()
+                                    false
+                                }
+                            }
+                        }
+                    }) {
+                        Text("Confirm", color = Color.DarkGray)
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = {
+                        openDialog = false
+                        confirmCount = 0
+                    }) {
+                        Text("Dismiss", color = Color.DarkGray)
+                    }
+                }
+            )
         }
     }
 }

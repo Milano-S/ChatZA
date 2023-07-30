@@ -53,7 +53,6 @@ class AuthViewModel @Inject constructor(
         )
     )
 
-
     fun oneTapSignIn(){
         viewModelScope.launch {
             oneTapSignInResponse = Response.Loading
