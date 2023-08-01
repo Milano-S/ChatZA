@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,15 +16,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Scaffold
 import androidx.compose.material.ScaffoldState
+import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.Card
@@ -42,12 +46,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.mil.chatza.R
 import com.mil.chatza.core.utils.Consts
+import com.mil.chatza.domain.repository.UserProfileRepositoryImp.Companion.province
+import com.mil.chatza.presentation.components.ProvinceChatCard
 import com.mil.chatza.presentation.navigation.Screen
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
 import com.mil.chatza.ui.theme.chatZaBrown
@@ -71,7 +78,7 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = "ChatZA")
+                    Text(text = "ChatZA Groups")
                 },
                 navigationIcon = {
                     IconButton(
@@ -91,10 +98,37 @@ fun HomeScreen(
                 )
             )
         },
-
         drawerContent = { DrawerView(currentContext, scaffoldState, scope, authVM, navController) },
     ) { paddingValues ->
         print(paddingValues)
+        HomePageContent()
+    }
+}
+
+@Composable
+private fun HomePageContent() {
+    val currentContext = LocalContext.current
+    Surface {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 60.dp),
+            ) {
+                Consts.provinceList.forEach { province ->
+                    item {
+                        ProvinceChatCard(text = province, onClick = {
+                            Toast.makeText(currentContext, province, Toast.LENGTH_SHORT).show()
+                        })
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -106,7 +140,7 @@ private fun DrawerView(
     authVM: AuthViewModel,
     navController: NavHostController
 ) {
-    val language = listOf("Settings", "Info", "Log Out")
+    val language = listOf("Help", "Rate Us", "Log Out")
     LazyColumn {
         item { AddDrawerHeader() }
         items(language.size) { index ->
@@ -122,7 +156,13 @@ private fun DrawerView(
                             Toast.makeText(context, "Logged Out", Toast.LENGTH_SHORT).show()
                         }
 
-                        else -> { Toast.makeText(context, language[index], Toast.LENGTH_SHORT).show() }
+                        "Help" -> {
+                            navController.navigate(Screen.HelpScreen.route)
+                        }
+
+                        else -> {
+                            Toast.makeText(context, language[index], Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             )
@@ -134,9 +174,9 @@ private fun DrawerView(
 private fun AddDrawerContentView(title: String, menuItemClick: () -> Unit) {
     val drawerIcon = when (title) {
         "Log Out" -> Icons.Default.ExitToApp
-        "Info" -> Icons.Default.Info
+        "Rate Us" -> Icons.Default.Star
         else -> {
-            Icons.Default.Settings
+            Icons.Default.Info
         }
     }
 

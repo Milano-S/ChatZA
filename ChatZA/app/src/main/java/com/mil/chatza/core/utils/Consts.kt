@@ -10,23 +10,8 @@ class Consts {
 
     companion object {
 
-        val BottomNavItems = listOf(
-            BottomNavItem(
-                label = "Home",
-                icon = Icons.Filled.Home,
-                route = "home"
-            ),
-            BottomNavItem(
-                label = "Search",
-                icon = Icons.Filled.Search,
-                route = "search"
-            ),
-            BottomNavItem(
-                label = "Profile",
-                icon = Icons.Filled.Person,
-                route = "profile"
-            )
-        )
+        //ChatZa Email
+        const val chatZaEmail = "chatzaapp@gmail.com"
 
         //Firebase Collections
         const val users = "users"

@@ -549,6 +549,7 @@ fun EditProfileScreen(
                                     }
                                     navController.navigate(Screen.LoginPage.route)
                                     authVM.signOut()
+                                    Toast.makeText(currentContext, "Account Successfully Deleted", Toast.LENGTH_SHORT).show()
                                     false
                                 } catch (e : Exception){
                                     Log.i(TAG, e.message.toString())

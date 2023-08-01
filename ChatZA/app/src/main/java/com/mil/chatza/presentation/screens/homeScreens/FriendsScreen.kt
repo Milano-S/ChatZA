@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -11,9 +12,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.mil.chatza.ui.theme.chatZaBlue
 
 @Composable
-fun SearchScreen() {
+fun FriendScreen() {
     // Column Composable,
     Column(
         modifier = Modifier
@@ -25,11 +27,11 @@ fun SearchScreen() {
     ) {
         // Icon Composable
         Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = "search",
-            tint = Color(0xFF0F9D58)
+            imageVector = Icons.Default.Person,
+            contentDescription = null,
+            tint = chatZaBlue
         )
         // Text to Display the current Screen
-        Text(text = "Search", color = Color.Black)
+        Text(text = "Friend", color = Color.Black)
     }
 }

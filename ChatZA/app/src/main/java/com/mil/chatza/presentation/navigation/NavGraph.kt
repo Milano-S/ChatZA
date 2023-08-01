@@ -1,9 +1,9 @@
 package com.mil.chatza.presentation.navigation
 
+import ChatScreen
 import HomePage
 import com.mil.chatza.presentation.screens.homeScreens.HomeScreen
 import com.mil.chatza.presentation.screens.homeScreens.ProfileScreen
-import SearchScreen
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -14,6 +14,7 @@ import com.mil.chatza.presentation.screens.CreateProfileScreen
 import com.mil.chatza.presentation.screens.DisclaimerScreen
 import com.mil.chatza.presentation.screens.EditProfileScreen
 import com.mil.chatza.presentation.screens.ForgotPasswordScreen
+import com.mil.chatza.presentation.screens.HelpScreen
 import com.mil.chatza.presentation.screens.LoginScreen
 import com.mil.chatza.presentation.screens.RegisterScreen
 import com.mil.chatza.presentation.screens.SplashScreen
@@ -51,7 +52,7 @@ fun NavGraph(
                 HomeScreen(navController = navController, authVM = authVM)
             }
 
-            composable(Screen.SettingsScreen.route) {
+            composable(Screen.ProfileScreen.route) {
                 ProfileScreen(
                     navController = navController,
                     firebaseVM = firebaseViewModel,
@@ -67,8 +68,12 @@ fun NavGraph(
                 )
             }
 
-            composable(Screen.ProfileScreen.route) {
-                SearchScreen()
+            composable(Screen.FriendsScreen.route) {
+                ChatScreen()
+            }
+
+            composable(Screen.HelpScreen.route) {
+                HelpScreen(navController = navController)
             }
         }
 
