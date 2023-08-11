@@ -1,6 +1,7 @@
 package com.mil.chatza.presentation.screens.homeScreens
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,7 +36,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -46,28 +45,38 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import com.google.android.play.integrity.internal.f
+import com.google.firebase.firestore.auth.User
 import com.mil.chatza.R
 import com.mil.chatza.core.utils.Consts
-import com.mil.chatza.domain.repository.UserProfileRepositoryImp.Companion.province
+import com.mil.chatza.domain.model.Chat
+import com.mil.chatza.domain.model.Message
+import com.mil.chatza.domain.model.UserProfile
 import com.mil.chatza.presentation.components.ProvinceChatCard
 import com.mil.chatza.presentation.navigation.Screen
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
+import com.mil.chatza.presentation.viewmodels.ChatZaViewModel
+import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
 import com.mil.chatza.ui.theme.chatZaBrown
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.util.Calendar
+import java.util.UUID
 
+
+private const val TAG = "HomeScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
-    authVM: AuthViewModel
+    authVM: AuthViewModel,
+    firebaseVM: FirebaseViewModel,
+    chatZaVM: ChatZaViewModel
 ) {
 
     val currentContext = LocalContext.current
@@ -101,13 +110,24 @@ fun HomeScreen(
         drawerContent = { DrawerView(currentContext, scaffoldState, scope, authVM, navController) },
     ) { paddingValues ->
         print(paddingValues)
-        HomePageContent()
+        HomePageContent(
+            authVM = authVM,
+            chatZaVM = chatZaVM,
+            firebaseVM = firebaseVM,
+            navController = navController,
+        )
     }
 }
 
 @Composable
-private fun HomePageContent() {
+private fun HomePageContent(
+    chatZaVM: ChatZaViewModel,
+    authVM: AuthViewModel,
+    firebaseVM: FirebaseViewModel,
+    navController: NavHostController,
+) {
     val currentContext = LocalContext.current
+    val scope = rememberCoroutineScope()
     Surface {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -121,9 +141,34 @@ private fun HomePageContent() {
                     .padding(bottom = 60.dp),
             ) {
                 Consts.provinceList.forEach { province ->
+                    scope.launch {
+                        firebaseVM.getChatDetails(province)
+                    }
                     item {
                         ProvinceChatCard(text = province, onClick = {
-                            Toast.makeText(currentContext, province, Toast.LENGTH_SHORT).show()
+                            /*scope.launch {
+                                //val currentUser = runBlocking { firebaseVM.getProfileDetails(authVM.auth.currentUser?.email.toString())}
+                                val currentUser = firebaseVM.currentProfileDetails.value
+                                if (currentUser != null) {
+                                    try {
+                                        firebaseVM.uploadChat(
+                                            Chat(
+                                                chatName = province,
+                                                participants = listOf(currentUser, currentUser),
+                                                lastMessage = "",
+                                                isPrivate = false,
+                                                messages = listOf(
+                                                    Message(sender = currentUser, message = "Hello World"),
+                                                    Message(sender = currentUser, message = "Hello World")
+                                                )
+                                            )
+                                        )
+                                    } catch (e: Exception) {
+                                        Log.i(TAG, e.message.toString())
+                                    }
+                                }
+                            }*/
+                            chatZaVM.setCurrentChat(province)
                         })
                     }
                 }

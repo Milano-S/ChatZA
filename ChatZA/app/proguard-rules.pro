@@ -19,3 +19,10 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+-keepclassmembers class com.mil.chatza.domain.model.Message {
+    public <init>();
+}
+-keepclassmembers class java.util.UUID {
+    public <init>(***);
+}
+

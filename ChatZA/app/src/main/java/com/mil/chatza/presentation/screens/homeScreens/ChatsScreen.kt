@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.MailOutline
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,7 +14,7 @@ import androidx.compose.ui.graphics.Color
 import com.mil.chatza.ui.theme.chatZaBlue
 
 @Composable
-fun ChatScreen() {
+fun ChatsScreen() {
     // Column Composable,
     Column(
         modifier = Modifier

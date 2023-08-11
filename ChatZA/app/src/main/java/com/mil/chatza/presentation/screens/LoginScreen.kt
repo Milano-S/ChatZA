@@ -277,10 +277,9 @@ fun LoginScreen(
                                             Toast.LENGTH_SHORT
                                         ).show()
                                         navController.navigate(Screen.VerifyEmailPage.route)
-                                    } else if (currentUser.isEmailVerified && firebaseVM.getProfileDetails(
-                                            currentUser.email.toString()
-                                        ).name != ""
+                                    } else if (currentUser.isEmailVerified && firebaseVM.getProfileDetails(currentUser.email.toString()).name != ""
                                     ) {
+                                        firebaseVM
                                         navController.navigate(route = Consts.Companion.Graph.MAIN)
                                     } else {
                                         //Verified and no Profile

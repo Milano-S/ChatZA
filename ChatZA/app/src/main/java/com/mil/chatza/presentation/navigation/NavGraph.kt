@@ -1,6 +1,6 @@
 package com.mil.chatza.presentation.navigation
 
-import ChatScreen
+import ChatsScreen
 import HomePage
 import com.mil.chatza.presentation.screens.homeScreens.HomeScreen
 import com.mil.chatza.presentation.screens.homeScreens.ProfileScreen
@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.mil.chatza.core.utils.Consts
+import com.mil.chatza.presentation.screens.ChatScreen
 import com.mil.chatza.presentation.screens.CreateProfileScreen
 import com.mil.chatza.presentation.screens.DisclaimerScreen
 import com.mil.chatza.presentation.screens.EditProfileScreen
@@ -20,13 +21,15 @@ import com.mil.chatza.presentation.screens.RegisterScreen
 import com.mil.chatza.presentation.screens.SplashScreen
 import com.mil.chatza.presentation.screens.VerifyEmailScreen
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
+import com.mil.chatza.presentation.viewmodels.ChatZaViewModel
 import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
 
 @Composable
 fun NavGraph(
     navController: NavHostController,
     authVM: AuthViewModel,
-    firebaseViewModel: FirebaseViewModel
+    firebaseViewModel: FirebaseViewModel,
+    chatZaViewModel : ChatZaViewModel
 ) {
 
     NavHost(
@@ -43,13 +46,14 @@ fun NavGraph(
                 HomePage(
                     navController = navController,
                     firebaseVM = firebaseViewModel,
-                    authVM = authVM
+                    authVM = authVM, chatZaViewModel = chatZaViewModel
+
                 )
             }
 
             //Home Screen
             composable(Screen.HomeScreen.route) {
-                HomeScreen(navController = navController, authVM = authVM)
+                HomeScreen(navController = navController, authVM = authVM, chatZaVM = chatZaViewModel, firebaseVM = firebaseViewModel)
             }
 
             composable(Screen.ProfileScreen.route) {
@@ -69,11 +73,15 @@ fun NavGraph(
             }
 
             composable(Screen.FriendsScreen.route) {
-                ChatScreen()
+                ChatsScreen()
             }
 
             composable(Screen.HelpScreen.route) {
                 HelpScreen(navController = navController)
+            }
+
+            composable(Screen.ChatDetailsScreen.route) {
+                ChatScreen(navController = navController)
             }
         }
 

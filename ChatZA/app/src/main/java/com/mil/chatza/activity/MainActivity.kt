@@ -12,12 +12,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraph
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.mil.chatza.core.utils.Consts
 import com.mil.chatza.presentation.navigation.NavGraph
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
+import com.mil.chatza.presentation.viewmodels.ChatZaViewModel
 import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
 import com.mil.chatza.ui.theme.ChatZATheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,14 +31,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ChatZATheme {
+
                 val navController = rememberNavController()
                 val authVM: AuthViewModel = hiltViewModel()
                 val firebaseViewModel: FirebaseViewModel = viewModel()
+                val chatZaViewModel: ChatZaViewModel = viewModel()
 
                 NavGraph(
                     navController = navController,
                     authVM = authVM,
-                    firebaseViewModel = firebaseViewModel
+                    firebaseViewModel = firebaseViewModel,
+                    chatZaViewModel = chatZaViewModel
                 )
             }
         }

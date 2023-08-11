@@ -23,12 +23,13 @@ import com.mil.chatza.presentation.navigation.Screen
 import com.mil.chatza.presentation.screens.homeScreens.HomeScreen
 import com.mil.chatza.presentation.screens.homeScreens.ProfileScreen
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
+import com.mil.chatza.presentation.viewmodels.ChatZaViewModel
 import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
 import com.mil.chatza.ui.theme.chatZaBlue
 import com.mil.chatza.ui.theme.chatZaBrown
 
 @Composable
-fun HomePage(navController: NavHostController, authVM : AuthViewModel, firebaseVM :FirebaseViewModel) {
+fun HomePage(navController: NavHostController, authVM : AuthViewModel, firebaseVM :FirebaseViewModel, chatZaViewModel: ChatZaViewModel) {
 
     val bottomNavScreens = listOf(Screen.HomeScreen, Screen.ChatScreen, Screen.FriendsScreen, Screen.ProfileScreen)
     val currentContext = LocalContext.current
@@ -67,8 +68,8 @@ fun HomePage(navController: NavHostController, authVM : AuthViewModel, firebaseV
             }
         }
         when (currentScreen) {
-            Screen.HomeScreen.route -> HomeScreen(navController = navController, authVM = authVM)
-            Screen.ChatScreen.route -> ChatScreen()
+            Screen.HomeScreen.route -> HomeScreen(navController = navController, authVM = authVM, firebaseVM = firebaseVM, chatZaVM = chatZaViewModel)
+            Screen.ChatScreen.route -> ChatsScreen()
             Screen.FriendsScreen.route -> FriendScreen()
             Screen.ProfileScreen.route -> ProfileScreen(navController = navController, authVM = authVM, firebaseVM = firebaseVM)
         }

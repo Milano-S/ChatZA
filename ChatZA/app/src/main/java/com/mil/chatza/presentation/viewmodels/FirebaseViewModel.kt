@@ -1,29 +1,25 @@
 package com.mil.chatza.presentation.viewmodels
 
-import android.content.Context
 import android.net.Uri
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.navigation.NavHostController
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.firestore.auth.User
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
-import com.google.firebase.firestore.ktx.toObjects
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.mil.chatza.core.utils.Consts
 import com.mil.chatza.core.utils.Consts.Companion.profileImages
-import com.mil.chatza.domain.model.FailureGsUrl
+import com.mil.chatza.domain.model.Chat
+import com.mil.chatza.domain.model.FailureChatUpload
 import com.mil.chatza.domain.model.FailureImageUpload
 import com.mil.chatza.domain.model.FailureUserUpload
-import com.mil.chatza.domain.model.GsUrlResult
-import com.mil.chatza.domain.model.SuccessGsUrl
+import com.mil.chatza.domain.model.Message
+import com.mil.chatza.domain.model.SuccessChatUpload
 import com.mil.chatza.domain.model.SuccessImageUpload
 import com.mil.chatza.domain.model.SuccessUserUpload
+import com.mil.chatza.domain.model.UploadChatResult
 import com.mil.chatza.domain.model.UploadImageResult
 import com.mil.chatza.domain.model.UploadUserResult
 import com.mil.chatza.domain.model.UserProfile
@@ -31,11 +27,11 @@ import com.mil.chatza.domain.repository.UserProfileRepositoryImp.Companion.email
 import kotlinx.coroutines.tasks.await
 
 private const val TAG = "FirebaseViewModel"
-
 class FirebaseViewModel : ViewModel() {
 
     private val firebaseDb = Firebase.firestore
     private val firebaseUsers = firebaseDb.collection(Consts.users)
+    private val firebaseChats = firebaseDb.collection(Consts.chats)
 
     //Upload User
     private var _userUploadException = MutableLiveData<Exception>()
@@ -49,6 +45,23 @@ class FirebaseViewModel : ViewModel() {
         } catch (e: Exception) {
             _userUploadException.value = e
             FailureUserUpload(e)
+        }
+    }
+
+    //Upload Chat
+    private var _chatUploadException = MutableLiveData<Exception>()
+    var charUploadException : LiveData<Exception> = _userUploadException
+    suspend fun uploadChat(chat : Chat) : UploadChatResult {
+        return try {
+            firebaseDb.collection(Consts.chats)
+                .add(chat)
+                .await()
+            Log.i(TAG, chat.chatName)
+            SuccessChatUpload(true)
+        } catch (e : Exception){
+            Log.i(TAG, e.message.toString())
+            _chatUploadException.value = e
+            FailureChatUpload(e)
         }
     }
 
@@ -138,7 +151,6 @@ class FirebaseViewModel : ViewModel() {
         val storageRef = storage.reference
         val imagesRef = storageRef.child("$profileImages/${imageUri.lastPathSegment}")
         val uploadTask = imagesRef.putFile(imageUri)
-        val imageUrl = imagesRef.getFile(imageUri)
         return try {
             uploadTask.await()
             _imageUrl.value = imagesRef.toString()
@@ -158,6 +170,11 @@ class FirebaseViewModel : ViewModel() {
     }
 
     //Get Profile Details
+    private var _currentProfileDetails = MutableLiveData<UserProfile>()
+    var currentProfileDetails: LiveData<UserProfile> = _currentProfileDetails
+    private fun setCurrentProfileDetails(userDetails : UserProfile){
+            _currentProfileDetails.value = userDetails
+    }
     suspend fun getProfileDetails(email: String): UserProfile {
         var profileDetails = UserProfile()
         val userList = firebaseUsers.get().await()
@@ -165,10 +182,30 @@ class FirebaseViewModel : ViewModel() {
             val currentUser = user.toObject(UserProfile::class.java)
             if (currentUser.email == email) {
                 profileDetails = currentUser
+                setCurrentProfileDetails(profileDetails)
             }
         }
         return profileDetails
     }
+
+    //Get Chat Details
+    suspend fun getChatDetails(chatName: String): Chat {
+        var chatDetails = Chat()
+        try {
+            val chatList = firebaseChats.get().await()
+            chatList.forEach { chat ->
+                val currentChat = chat.toObject(Chat::class.java)
+                Log.i(TAG, currentChat.chatName + " " + currentChat.lastMessage)
+                if (currentChat.chatName == chatName) {
+                    chatDetails = currentChat
+                }
+            }
+        } catch (e: Exception) {
+            Log.i(TAG, e.message.toString())
+        }
+        return chatDetails
+    }
+
 
     fun replaceEncodedColon(input: String): String {
         return input.replace("%3A", ":")

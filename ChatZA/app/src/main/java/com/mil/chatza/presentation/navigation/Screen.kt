@@ -17,4 +17,5 @@ sealed class Screen(
     object HelpScreen : Screen("help_screen")
     object ForgotPasswordScreen : Screen("forgot_password_screens")
     object EditProfileScreen : Screen("edit_profile_screen")
+    object ChatDetailsScreen : Screen("chat_screen")
 }

@@ -15,6 +15,7 @@ class Consts {
 
         //Firebase Collections
         const val users = "users"
+        const val chats = "chats"
         const val profileImages = "images"
 
         //Nav Graphs
