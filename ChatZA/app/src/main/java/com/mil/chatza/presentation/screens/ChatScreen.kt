@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -20,6 +21,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.Button
@@ -42,16 +44,20 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.mil.chatza.presentation.components.ChatMessageBubble
+import com.mil.chatza.presentation.viewmodels.ChatZaViewModel
 import com.mil.chatza.ui.theme.chatZaBlue
 import com.mil.chatza.ui.theme.chatZaBrown
 import kotlinx.coroutines.launch
 
 
 private const val TAG = "ChatScreen"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     navController: NavHostController,
+    chatZaVM: ChatZaViewModel
 ) {
 
     val currentContext = LocalContext.current
@@ -63,9 +69,21 @@ fun ChatScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    androidx.compose.material3.Text(text = "Chat Name")
+                    androidx.compose.material3.Text(text = chatZaVM.currentChatName.value.toString())
                 },
-                 colors = TopAppBarDefaults.topAppBarColors(
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            navController.popBackStack()
+                        },
+                    ) {
+                        androidx.compose.material3.Icon(
+                            Icons.Rounded.ArrowBack,
+                            contentDescription = null
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = chatZaBrown
                 )
             )
@@ -87,6 +105,19 @@ private fun ChatScreenContent() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
+
+            Column(modifier = Modifier.fillMaxSize()) {
+                ChatMessageBubble(message = "Hello!", isUser = false)
+                ChatMessageBubble(message = "Hi there!", isUser = true)
+                ChatMessageBubble(message = "Hello!", isUser = false)
+                ChatMessageBubble(message = "Hello!", isUser = false)
+
+                ChatMessageBubble(
+                    message = "Hi there! Hi there! Hi there! Hi there! Hi there! Hi there! Hi there! Hi there!",
+                    isUser = true
+                )
+                ChatMessageBubble(message = "Hi there!", isUser = true)
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -141,5 +172,5 @@ private fun OutlinedTextField() {
 @Preview
 @Composable
 private fun PreviewChatScreen() {
-    ChatScreen(rememberNavController())
+    //ChatScreen(rememberNavController())
 }

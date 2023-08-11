@@ -146,6 +146,7 @@ private fun HomePageContent(
                     }
                     item {
                         ProvinceChatCard(text = province, onClick = {
+                            navController.navigate(Screen.ChatDetailsScreen.route)
                             /*scope.launch {
                                 //val currentUser = runBlocking { firebaseVM.getProfileDetails(authVM.auth.currentUser?.email.toString())}
                                 val currentUser = firebaseVM.currentProfileDetails.value

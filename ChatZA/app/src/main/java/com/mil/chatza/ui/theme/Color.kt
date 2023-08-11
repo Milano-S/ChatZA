@@ -11,9 +11,9 @@ val Purple40 = Color(0xC4FFFFFF)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF000000)
 
-val chatZaBrown = Color(
-    0xffece2d6
-)
+val chatZaBrown = Color(0xffece2d6)
+
+val chatZaBrownDark = Color(0xFFC5BEB4)
 
 val chatZaBlue = Color(0xff78a39c)
 
