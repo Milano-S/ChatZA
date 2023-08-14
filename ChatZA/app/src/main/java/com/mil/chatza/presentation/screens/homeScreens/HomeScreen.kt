@@ -141,9 +141,6 @@ private fun HomePageContent(
                     .padding(bottom = 60.dp),
             ) {
                 Consts.provinceList.forEach { province ->
-                    scope.launch {
-                        firebaseVM.getChatDetails(province)
-                    }
                     item {
                         ProvinceChatCard(text = province, onClick = {
                             navController.navigate(Screen.ChatDetailsScreen.route)

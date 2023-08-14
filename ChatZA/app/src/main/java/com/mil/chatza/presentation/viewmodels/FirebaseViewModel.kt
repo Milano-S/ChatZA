@@ -5,8 +5,9 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.auth.User
 import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.mil.chatza.core.utils.Consts
@@ -23,10 +24,10 @@ import com.mil.chatza.domain.model.UploadChatResult
 import com.mil.chatza.domain.model.UploadImageResult
 import com.mil.chatza.domain.model.UploadUserResult
 import com.mil.chatza.domain.model.UserProfile
-import com.mil.chatza.domain.repository.UserProfileRepositoryImp.Companion.email
 import kotlinx.coroutines.tasks.await
 
 private const val TAG = "FirebaseViewModel"
+
 class FirebaseViewModel : ViewModel() {
 
     private val firebaseDb = Firebase.firestore
@@ -50,15 +51,15 @@ class FirebaseViewModel : ViewModel() {
 
     //Upload Chat
     private var _chatUploadException = MutableLiveData<Exception>()
-    var charUploadException : LiveData<Exception> = _userUploadException
-    suspend fun uploadChat(chat : Chat) : UploadChatResult {
+    var charUploadException: LiveData<Exception> = _userUploadException
+    suspend fun uploadChat(chat: Chat): UploadChatResult {
         return try {
             firebaseDb.collection(Consts.chats)
                 .add(chat)
                 .await()
             Log.i(TAG, chat.chatName)
             SuccessChatUpload(true)
-        } catch (e : Exception){
+        } catch (e: Exception) {
             Log.i(TAG, e.message.toString())
             _chatUploadException.value = e
             FailureChatUpload(e)
@@ -85,7 +86,7 @@ class FirebaseViewModel : ViewModel() {
             }
     }
 
-     fun deleteProfileImage(gsUrl: String) {
+    fun deleteProfileImage(gsUrl: String) {
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.getReferenceFromUrl(gsUrl)
         storageRef.delete()
@@ -125,6 +126,52 @@ class FirebaseViewModel : ViewModel() {
             }
     }
 
+    //Send Message
+    suspend fun sendMessage(chatDetails: Chat, newMessage : Message){
+        val chatDataPath = getChatId(chatDetails)
+        val messageList = (chatDetails.messages as MutableList).apply { add(newMessage) }
+        firebaseChats.document(chatDataPath).get()
+            .addOnSuccessListener { document ->
+                val chatData = document.toObject(Chat::class.java)
+                if (chatData != null) {
+                    //Edit User Details
+                    try {
+                        firebaseChats.document(chatDataPath).update(
+                            "messages", messageList
+                        )
+                    } catch (e : Exception){
+                        Log.i(TAG, e.message.toString())
+                    }
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.i(TAG, e.message.toString())
+            }
+    }
+
+    //Edit Chat Details
+    suspend fun joinChatGroup(chatDetails: Chat, userDetails: UserProfile?) {
+        val chatDataPath = getChatId(chatDetails)
+        val participantList = (chatDetails.participants as MutableList).apply { add(userDetails!!) }
+        firebaseChats.document(chatDataPath).get()
+            .addOnSuccessListener { document ->
+                val chatData = document.toObject(Chat::class.java)
+                if (chatData != null) {
+                    //Edit User Details
+                    try {
+                        firebaseChats.document(chatDataPath).update(
+                            "participants", participantList
+                        )
+                    } catch (e : Exception){
+                        Log.i(TAG, e.message.toString())
+                    }
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.i(TAG, exception.message.toString())
+            }
+    }
+
     private suspend fun getUserId(userEdit: UserProfile): String {
         var userId = ""
         val userList = firebaseUsers.get().await()
@@ -137,6 +184,17 @@ class FirebaseViewModel : ViewModel() {
         return userId
     }
 
+    private suspend fun getChatId(chatEdit: Chat): String {
+        var chatId = ""
+        val chatList = firebaseChats.get().await()
+        chatList.forEach { chat ->
+            val currentChat = chat.toObject(Chat::class.java)
+            if (currentChat.chatName == chatEdit.chatName) {
+                chatId = chat.id
+            }
+        }
+        return chatId
+    }
 
     //Upload Profile Image
     private var _imageUploadException = MutableLiveData<Exception>()
@@ -172,9 +230,10 @@ class FirebaseViewModel : ViewModel() {
     //Get Profile Details
     private var _currentProfileDetails = MutableLiveData<UserProfile>()
     var currentProfileDetails: LiveData<UserProfile> = _currentProfileDetails
-    private fun setCurrentProfileDetails(userDetails : UserProfile){
-            _currentProfileDetails.value = userDetails
+    private fun setCurrentProfileDetails(userDetails: UserProfile) {
+        _currentProfileDetails.value = userDetails
     }
+
     suspend fun getProfileDetails(email: String): UserProfile {
         var profileDetails = UserProfile()
         val userList = firebaseUsers.get().await()
@@ -189,13 +248,15 @@ class FirebaseViewModel : ViewModel() {
     }
 
     //Get Chat Details
+    private val _currentChatDetails = MutableLiveData<Chat>()
+    var currentChatDetails: LiveData<Chat> = _currentChatDetails
     suspend fun getChatDetails(chatName: String): Chat {
         var chatDetails = Chat()
         try {
             val chatList = firebaseChats.get().await()
             chatList.forEach { chat ->
                 val currentChat = chat.toObject(Chat::class.java)
-                Log.i(TAG, currentChat.chatName + " " + currentChat.lastMessage)
+                Log.i(TAG, currentChat.chatName)
                 if (currentChat.chatName == chatName) {
                     chatDetails = currentChat
                 }

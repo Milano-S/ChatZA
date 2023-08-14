@@ -81,7 +81,7 @@ fun NavGraph(
             }
 
             composable(Screen.ChatDetailsScreen.route) {
-                ChatScreen(navController = navController, chatZaViewModel)
+                ChatScreen(navController = navController, chatZaViewModel, firebaseVM = firebaseViewModel)
             }
         }
 
