@@ -11,7 +11,7 @@ sealed class Screen(
     object DisclaimerPage : Screen("disclaimer_page")
     object HomePage : Screen("home_page")
     object HomeScreen : Screen("Home")
-    object ChatScreen : Screen("Chat")
+    object ChatScreen : Screen("Chats")
     object FriendsScreen : Screen("Friends")
     object ProfileScreen : Screen("Profile")
     object HelpScreen : Screen("help_screen")

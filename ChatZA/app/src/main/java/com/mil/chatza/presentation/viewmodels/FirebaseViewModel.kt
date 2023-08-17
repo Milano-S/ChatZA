@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.auth.User
 import com.google.firebase.firestore.ktx.firestore
@@ -24,6 +25,7 @@ import com.mil.chatza.domain.model.UploadChatResult
 import com.mil.chatza.domain.model.UploadImageResult
 import com.mil.chatza.domain.model.UploadUserResult
 import com.mil.chatza.domain.model.UserProfile
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 private const val TAG = "FirebaseViewModel"
@@ -113,7 +115,8 @@ class FirebaseViewModel : ViewModel() {
                             "gender", newUserDetails.gender,
                             "name", newUserDetails.name,
                             "profileImageUrl", newUserDetails.profileImageUrl,
-                            "province", newUserDetails.province
+                            "province", newUserDetails.province,
+                            "chatGroups", newUserDetails.chatGroups
                         )
                     } catch (e: Exception) {
                         Log.i(TAG, e.message.toString())
@@ -127,7 +130,7 @@ class FirebaseViewModel : ViewModel() {
     }
 
     //Send Message
-    suspend fun sendMessage(chatDetails: Chat, newMessage : Message){
+    suspend fun sendMessage(chatDetails: Chat, newMessage: Message) {
         val chatDataPath = getChatId(chatDetails)
         val messageList = (chatDetails.messages as MutableList).apply { add(newMessage) }
         firebaseChats.document(chatDataPath).get()
@@ -139,7 +142,7 @@ class FirebaseViewModel : ViewModel() {
                         firebaseChats.document(chatDataPath).update(
                             "messages", messageList
                         )
-                    } catch (e : Exception){
+                    } catch (e: Exception) {
                         Log.i(TAG, e.message.toString())
                     }
                 }
@@ -159,10 +162,25 @@ class FirebaseViewModel : ViewModel() {
                 if (chatData != null) {
                     //Edit User Details
                     try {
-                        firebaseChats.document(chatDataPath).update(
-                            "participants", participantList
-                        )
-                    } catch (e : Exception){
+                        firebaseChats.document(chatDataPath).update("participants", participantList)
+                        val newUserGroupList =
+                            (userDetails!!.chatGroups as MutableList).apply { add(chatDetails.chatName) }
+                        viewModelScope.launch {
+                            editUserDetails(
+                                oldUserDetails = userDetails,
+                                newUserDetails = UserProfile(
+                                    dateCreated = userDetails.dateCreated,
+                                    email = userDetails.email,
+                                    name = userDetails.name,
+                                    age = userDetails.age,
+                                    gender = userDetails.gender,
+                                    province = userDetails.province,
+                                    profileImageUrl = userDetails.profileImageUrl,
+                                    chatGroups = newUserGroupList,
+                                )
+                            )
+                        }
+                    } catch (e: Exception) {
                         Log.i(TAG, e.message.toString())
                     }
                 }

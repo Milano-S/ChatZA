@@ -6,7 +6,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +16,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -45,7 +50,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,6 +61,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.google.android.play.integrity.internal.c
 import com.google.android.play.integrity.internal.f
+import com.google.android.play.integrity.internal.x
 import com.mil.chatza.domain.model.Chat
 import com.mil.chatza.domain.model.Message
 import com.mil.chatza.presentation.components.ChatMessageBubble
@@ -114,7 +122,16 @@ private fun ChatScreenContent(
     chatZaVM: ChatZaViewModel,
     firebaseVM: FirebaseViewModel
 ) {
+    //Adaptive Chunk Values
+    val desiredColumnWidthDp = 160.dp
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = with(LocalDensity.current) { configuration.screenWidthDp.dp }
+    val columns = (screenWidthDp / desiredColumnWidthDp).toInt().coerceAtLeast(1)
+
+
     val scope = rememberCoroutineScope()
+    val scrollState = rememberLazyListState()
+
     val currentContext = LocalContext.current
 
     var progressBarState by remember { mutableStateOf(true) }
@@ -129,7 +146,8 @@ private fun ChatScreenContent(
             progressBarState = true
             chatDetails = firebaseVM.getChatDetails(chatZaVM.currentChatName.value.toString())
             isChatJoined =
-                chatDetails!!.participants.contains(firebaseVM.currentProfileDetails.value)
+                firebaseVM.currentProfileDetails.value!!.chatGroups.contains(chatDetails!!.chatName)
+            scrollState.animateScrollToItem(chatDetails!!.messages.size - 1)
             progressBarState = false
         } catch (e: Exception) {
             progressBarState = false
@@ -138,127 +156,168 @@ private fun ChatScreenContent(
         }
     }
 
+
     Surface(modifier = Modifier.fillMaxSize()) {
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .background(Color.White),
+                .background(Color.White)
+            /*.verticalScroll(rememberScrollState())*/,
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
 
-            //Messages
-            Column(modifier = Modifier.fillMaxSize()) {
-                chatDetails?.messages?.forEach { message ->
-                    ChatMessageBubble(
-                        message = message,
-                        isUser = message.sender.email == firebaseVM.currentProfileDetails.value?.email,
-                        userName = message.sender.name
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            //Join
-            Row {
-                when (isChatJoined) {
-                    false -> {
-                        Button(
-                            onClick = {
-                                scope.launch {
-                                    progressBarState = true
-                                    try {
-                                        firebaseVM.joinChatGroup(
-                                            chatDetails = chatDetails!!,
-                                            userDetails = firebaseVM.currentProfileDetails.value
-                                        )
-                                        isChatJoined = true
-                                    } catch (e: Exception) {
-                                        Log.i(TAG, e.message.toString())
-                                        Toast.makeText(
-                                            currentContext,
-                                            e.message.toString(),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                    progressBarState = false
-                                }
-                            },
-                            shape = RoundedCornerShape(50.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 45.dp, vertical = 20.dp)
-                                .height(50.dp)
-                                .border(
-                                    border = BorderStroke(width = 0.5.dp, color = Color.DarkGray),
-                                    shape = RoundedCornerShape(50.dp)
-                                ),
-                            colors = ButtonDefaults.buttonColors(containerColor = chatZaBlue)
-                        ) {
-                            androidx.compose.material3.Text(
-                                text = "Join",
-                                fontSize = 15.sp,
-                                color = Color.DarkGray
+            LazyColumn(
+                state = scrollState,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxSize(),
+            ) {
+                //Messages
+                if (chatDetails != null) {
+                    items(chatDetails!!.messages.chunked(columns)) { messageList ->
+                        messageList.forEach { message ->
+                            ChatMessageBubble(
+                                message = message,
+                                isUser = message.sender.email == firebaseVM.currentProfileDetails.value?.email,
+                                isPreviousMessage = false,
+                                userName = message.sender.name,
+                                profileImageUrl = message.sender.profileImageUrl,
+                                firebaseVM = firebaseVM,
                             )
                         }
                     }
+                }
+                /*item {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        repeat(50) {
+                            chatDetails?.messages?.forEach { message ->
+                                ChatMessageBubble(
+                                    message = message,
+                                    isUser = message.sender.email == firebaseVM.currentProfileDetails.value?.email,
+                                    userName = message.sender.name
+                                )
+                            }
+                        }
+                    }
+                }*/
 
-                    true -> {
-                        OutlinedTextField(
-                            modifier = Modifier
-                                .padding(15.dp)
-                                .fillMaxWidth(),
-                            value = messageText,
-                            onValueChange = { messageText = it },
-                            label = { Text("Message...", color = Color.Gray, fontSize = 16.sp) },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = chatZaBlue,
-                                unfocusedBorderColor = chatZaBlue,
-                            ),
-                            trailingIcon = {
-                                Icon(
-                                    modifier = Modifier.clickable {
-                                        if (messageText.isNotBlank()) {
-                                            scope.launch {
-                                                try {
-                                                    firebaseVM.sendMessage(
-                                                        chatDetails = chatDetails!!,
-                                                        newMessage = Message(
-                                                            sender = firebaseVM.currentProfileDetails.value!!,
-                                                            message = messageText
-                                                        )
-                                                    )
-                                                    messageText = ""
-                                                } catch (e: Exception) {
-                                                    messageText = ""
-                                                    Log.i(TAG, e.message.toString())
-                                                    Toast.makeText(
-                                                        currentContext,
-                                                        e.message.toString(),
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                }
-                                                launchKey++
+                item { Spacer(modifier = Modifier.weight(1f)) }
+
+                item {
+                    //Join
+                    Row {
+                        when (isChatJoined) {
+                            false -> {
+                                Button(
+                                    onClick = {
+                                        scope.launch {
+                                            progressBarState = true
+                                            try {
+                                                firebaseVM.joinChatGroup(
+                                                    chatDetails = chatDetails!!,
+                                                    userDetails = firebaseVM.currentProfileDetails.value
+                                                )
+                                                isChatJoined = true
+                                            } catch (e: Exception) {
+                                                Log.i(TAG, e.message.toString())
+                                                Toast.makeText(
+                                                    currentContext,
+                                                    e.message.toString(),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
                                             }
+                                            progressBarState = false
                                         }
                                     },
-                                    imageVector = Icons.Default.Send,
-                                    contentDescription = null
-                                )
-                            },
-                        )
-                    }
+                                    shape = RoundedCornerShape(50.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 45.dp, vertical = 20.dp)
+                                        .height(50.dp)
+                                        .border(
+                                            border = BorderStroke(
+                                                width = 0.5.dp,
+                                                color = Color.DarkGray
+                                            ),
+                                            shape = RoundedCornerShape(50.dp)
+                                        ),
+                                    colors = ButtonDefaults.buttonColors(containerColor = chatZaBlue)
+                                ) {
+                                    androidx.compose.material3.Text(
+                                        text = "Join",
+                                        fontSize = 15.sp,
+                                        color = Color.DarkGray
+                                    )
+                                }
+                            }
 
-                    else -> {}
+                            true -> {
+                                OutlinedTextField(
+                                    modifier = Modifier
+                                        .padding(15.dp)
+                                        .fillMaxWidth(),
+                                    value = messageText,
+                                    onValueChange = { messageText = it },
+                                    label = {
+                                        Text(
+                                            "Message...",
+                                            color = Color.Gray,
+                                            fontSize = 16.sp
+                                        )
+                                    },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = chatZaBlue,
+                                        unfocusedBorderColor = chatZaBlue,
+                                    ),
+                                    trailingIcon = {
+                                        Icon(
+                                            modifier = Modifier.clickable {
+                                                if (messageText.isNotBlank()) {
+                                                    scope.launch {
+                                                        try {
+                                                            firebaseVM.sendMessage(
+                                                                chatDetails = chatDetails!!,
+                                                                newMessage = Message(
+                                                                    sender = firebaseVM.currentProfileDetails.value!!,
+                                                                    message = messageText
+                                                                )
+                                                            )
+                                                            messageText = ""
+                                                        } catch (e: Exception) {
+                                                            messageText = ""
+                                                            Log.i(TAG, e.message.toString())
+                                                            Toast.makeText(
+                                                                currentContext,
+                                                                e.message.toString(),
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                        }
+                                                        launchKey++
+                                                    }
+                                                }
+                                            },
+                                            imageVector = Icons.Default.Send,
+                                            contentDescription = null
+                                        )
+                                    },
+                                )
+                            }
+
+                            else -> {}
+                        }
+                    }
                 }
+
             }
         }
-        when (progressBarState) {
-            true -> ProgressBar()
-            else -> {}
-        }
+    }
+
+    when (progressBarState) {
+        true -> ProgressBar()
+        else -> {}
     }
 }
 
@@ -296,6 +355,14 @@ private fun OutlinedTextField(
                                         message = messageText
                                     )
                                 )
+                                (chatDetails.messages as MutableList).apply {
+                                    add(
+                                        Message(
+                                            sender = firebaseVM.currentProfileDetails.value!!,
+                                            message = messageText
+                                        )
+                                    )
+                                }
                                 messageText = ""
                             } catch (e: Exception) {
                                 messageText = ""
