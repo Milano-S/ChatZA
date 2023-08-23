@@ -17,6 +17,7 @@ import com.mil.chatza.presentation.screens.EditProfileScreen
 import com.mil.chatza.presentation.screens.ForgotPasswordScreen
 import com.mil.chatza.presentation.screens.HelpScreen
 import com.mil.chatza.presentation.screens.LoginScreen
+import com.mil.chatza.presentation.screens.ProfileDetailsScreen
 import com.mil.chatza.presentation.screens.RegisterScreen
 import com.mil.chatza.presentation.screens.SplashScreen
 import com.mil.chatza.presentation.screens.VerifyEmailScreen
@@ -83,6 +84,10 @@ fun NavGraph(
             composable(Screen.ChatDetailsScreen.route) {
                 ChatScreen(navController = navController, chatZaViewModel, firebaseVM = firebaseViewModel)
             }
+            composable(Screen.ProfileDetailsScreen.route) {
+                ProfileDetailsScreen(navController = navController, firebaseVM = firebaseViewModel, chatZaVM = chatZaViewModel)
+            }
+
         }
 
         //Auth Nav

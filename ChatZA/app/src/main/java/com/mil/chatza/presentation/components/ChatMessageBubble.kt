@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material3.Card
@@ -27,16 +25,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -44,9 +36,7 @@ import com.mil.chatza.R
 import com.mil.chatza.domain.model.Message
 import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
 import com.mil.chatza.ui.theme.chatZaBlue
-import com.mil.chatza.ui.theme.chatZaBrown
 import com.mil.chatza.ui.theme.chatZaBrownDark
-import kotlinx.coroutines.runBlocking
 
 private const val TAG = "ChatMessageBubble"
 
@@ -57,7 +47,8 @@ fun ChatMessageBubble(
     profileImageUrl: String,
     isUser: Boolean,
     isPreviousMessage: Boolean,
-    firebaseVM: FirebaseViewModel
+    firebaseVM: FirebaseViewModel,
+    profileClick : () -> Unit
 ) {
     val backgroundColor = if (isUser) chatZaBlue else chatZaBrownDark
     val horizontalAlignment = if (isUser) Arrangement.End else Arrangement.Start
@@ -91,7 +82,7 @@ fun ChatMessageBubble(
                     modifier = Modifier
                         .width(25.dp)
                         .height(25.dp)
-                        .clickable { },
+                        .clickable { profileClick.invoke() },
                     border = BorderStroke(width = 1.dp, color = Color.DarkGray),
                     colors = CardDefaults.cardColors(
                         containerColor = Color.White
@@ -105,8 +96,7 @@ fun ChatMessageBubble(
                         placeholder = painterResource(id = R.drawable.profile_2),
                         contentDescription = null,
                         modifier = Modifier
-                            .fillMaxSize()
-                            .clickable { },
+                            .fillMaxSize(),
                         fallback = painterResource(id = R.drawable.profile_2)
                     )
                 }

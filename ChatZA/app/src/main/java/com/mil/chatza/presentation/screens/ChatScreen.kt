@@ -6,9 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,13 +14,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
@@ -30,7 +25,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -56,16 +50,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.google.android.play.integrity.internal.c
-import com.google.android.play.integrity.internal.f
-import com.google.android.play.integrity.internal.x
 import com.mil.chatza.domain.model.Chat
 import com.mil.chatza.domain.model.Message
 import com.mil.chatza.presentation.components.ChatMessageBubble
 import com.mil.chatza.presentation.components.ProgressBar
+import com.mil.chatza.presentation.navigation.Screen
 import com.mil.chatza.presentation.viewmodels.ChatZaViewModel
 import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
 import com.mil.chatza.ui.theme.chatZaBlue
@@ -113,14 +103,15 @@ fun ChatScreen(
         },
     ) { paddingValues ->
         print(paddingValues)
-        ChatScreenContent(firebaseVM = firebaseVM, chatZaVM = chatZaVM)
+        ChatScreenContent(firebaseVM = firebaseVM, chatZaVM = chatZaVM, navController = navController)
     }
 }
 
 @Composable
 private fun ChatScreenContent(
     chatZaVM: ChatZaViewModel,
-    firebaseVM: FirebaseViewModel
+    firebaseVM: FirebaseViewModel,
+    navController: NavHostController
 ) {
     //Adaptive Chunk Values
     val desiredColumnWidthDp = 160.dp
@@ -142,17 +133,19 @@ private fun ChatScreenContent(
     var launchKey by remember { mutableStateOf(0) }
 
     LaunchedEffect(launchKey) {
-        try {
-            progressBarState = true
-            chatDetails = firebaseVM.getChatDetails(chatZaVM.currentChatName.value.toString())
-            isChatJoined =
-                firebaseVM.currentProfileDetails.value!!.chatGroups.contains(chatDetails!!.chatName)
-            scrollState.animateScrollToItem(chatDetails!!.messages.size - 1)
-            progressBarState = false
-        } catch (e: Exception) {
-            progressBarState = false
-            Log.i(TAG, e.message.toString())
-            Toast.makeText(currentContext, e.message.toString(), Toast.LENGTH_SHORT).show()
+        repeat(2) {
+            try {
+                progressBarState = true
+                chatDetails = firebaseVM.getChatDetails(chatZaVM.currentChatName.value.toString())
+                isChatJoined =
+                    firebaseVM.currentProfileDetails.value!!.chatGroups.contains(chatDetails!!.chatName)
+                scrollState.animateScrollToItem(chatDetails!!.messages.size - 1)
+                progressBarState = false
+            } catch (e: Exception) {
+                progressBarState = false
+                Log.i(TAG, e.message.toString())
+                Toast.makeText(currentContext, e.message.toString(), Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -175,10 +168,11 @@ private fun ChatScreenContent(
                 modifier = Modifier
                     .fillMaxSize(),
             ) {
-                //Messages
+                // Messages
                 if (chatDetails != null) {
                     items(chatDetails!!.messages.chunked(columns)) { messageList ->
                         messageList.forEach { message ->
+                            val previousMessage: Message? = if (messageList.indexOf(message) != 0) messageList[messageList.indexOf(message) - 1] else null
                             ChatMessageBubble(
                                 message = message,
                                 isUser = message.sender.email == firebaseVM.currentProfileDetails.value?.email,
@@ -186,10 +180,15 @@ private fun ChatScreenContent(
                                 userName = message.sender.name,
                                 profileImageUrl = message.sender.profileImageUrl,
                                 firebaseVM = firebaseVM,
+                                profileClick = {
+                                    chatZaVM.setCurrentUserDetails(message.sender)
+                                    navController.navigate(Screen.ProfileDetailsScreen.route)
+                                }
                             )
                         }
                     }
                 }
+
                 /*item {
                     Column(modifier = Modifier.fillMaxSize()) {
                         repeat(50) {
