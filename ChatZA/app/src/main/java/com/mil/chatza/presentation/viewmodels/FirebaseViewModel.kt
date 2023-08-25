@@ -25,6 +25,7 @@ import com.mil.chatza.domain.model.UploadChatResult
 import com.mil.chatza.domain.model.UploadImageResult
 import com.mil.chatza.domain.model.UploadUserResult
 import com.mil.chatza.domain.model.UserProfile
+import com.mil.chatza.domain.repository.UserProfileRepositoryImp.Companion.email
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -35,6 +36,29 @@ class FirebaseViewModel : ViewModel() {
     private val firebaseDb = Firebase.firestore
     private val firebaseUsers = firebaseDb.collection(Consts.users)
     private val firebaseChats = firebaseDb.collection(Consts.chats)
+
+    suspend fun getAllChats(): List<Chat> {
+        val chats = mutableListOf<Chat>()
+        val chatDocuments = firebaseChats.get().await()
+        chatDocuments.forEach { chatDocument ->
+            val currentChat = chatDocument.toObject(Chat::class.java)
+            chats.add(currentChat)
+        }
+        return chats
+    }
+
+
+    suspend fun doesChatExist(chatName: String): Boolean {
+        val chatList = firebaseChats.get().await()
+        chatList.forEach { chat ->
+            val chatData = chat.toObject(Chat::class.java)
+            if (chatData.chatName == chatName) {
+                return true
+            }
+        }
+        return false
+    }
+
 
     //Upload User
     private var _userUploadException = MutableLiveData<Exception>()
@@ -53,7 +77,7 @@ class FirebaseViewModel : ViewModel() {
 
     //Upload Chat
     private var _chatUploadException = MutableLiveData<Exception>()
-    var charUploadException: LiveData<Exception> = _userUploadException
+    var chatUploadException: LiveData<Exception> = _userUploadException
     suspend fun uploadChat(chat: Chat): UploadChatResult {
         return try {
             firebaseDb.collection(Consts.chats)
@@ -250,6 +274,19 @@ class FirebaseViewModel : ViewModel() {
     var currentProfileDetails: LiveData<UserProfile> = _currentProfileDetails
     private fun setCurrentProfileDetails(userDetails: UserProfile) {
         _currentProfileDetails.value = userDetails
+    }
+
+    suspend fun getProfileDetailsFromName(userName: String): UserProfile {
+        var profileDetails = UserProfile()
+        val userList = firebaseUsers.get().await()
+        userList.forEach { user ->
+            val currentUser = user.toObject(UserProfile::class.java)
+            if (currentUser.name == userName) {
+                profileDetails = currentUser
+                setCurrentProfileDetails(profileDetails)
+            }
+        }
+        return profileDetails
     }
 
     suspend fun getProfileDetails(email: String): UserProfile {

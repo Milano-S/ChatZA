@@ -489,22 +489,9 @@ fun EditProfileScreen(
                                     Log.i(TAG, e.message.toString())
                                 }
                             }
-                            firebaseVM.editUserDetails(
-                                oldUserDetails = getUserDetails(),
-                                newUserDetails = UserProfile(
-                                    age = age,
-                                    gender = genderFilterTerm,
-                                    name = username,
-                                    profileImageUrl = if (selectedImageUri == null) imageUri.toString() else firebaseVM.imageUrl.value.toString(),
-                                    province = selectedProvince
-                                )
-                            )
+                            firebaseVM.editUserDetails(oldUserDetails = getUserDetails(), newUserDetails = UserProfile(age = age, gender = genderFilterTerm, name = username, profileImageUrl = if (selectedImageUri == null) imageUri.toString() else firebaseVM.imageUrl.value.toString(), province = selectedProvince))
                             progressBarState = false
-                            Toast.makeText(
-                                currentContext,
-                                "Profile Successfully Updated",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            Toast.makeText(currentContext, "Profile Successfully Updated", Toast.LENGTH_SHORT).show()
                             navController.popBackStack()
                         }
                     }

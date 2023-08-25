@@ -72,6 +72,9 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.mil.chatza.R
 import com.mil.chatza.core.utils.Consts
+import com.mil.chatza.domain.model.Chat
+import com.mil.chatza.domain.model.SuccessChatUpload
+import com.mil.chatza.domain.model.UploadChatResult
 import com.mil.chatza.domain.model.UserProfile
 import com.mil.chatza.presentation.components.ProgressBar
 import com.mil.chatza.presentation.navigation.Screen
@@ -85,18 +88,32 @@ import kotlinx.coroutines.runBlocking
 
 
 private const val TAG = "ProfileDetailsScreen"
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ProfileDetailsScreen(
     navController: NavHostController,
     firebaseVM: FirebaseViewModel,
-    chatZaVM  :ChatZaViewModel
+    authVM: AuthViewModel,
+    chatZaVM: ChatZaViewModel
 ) {
     val userProfile = chatZaVM.currentUserDetails.value
     if (userProfile != null) {
-        ProfileDetailsPage(userProfile = userProfile, firebaseVM = firebaseVM, navController = navController)
+        ProfileDetailsPage(
+            userProfile = userProfile,
+            firebaseVM = firebaseVM,
+            navController = navController,
+            authVM = authVM,
+            chatZaVM = chatZaVM
+        )
     } else {
-        ProfileDetailsPage(userProfile = UserProfile(), firebaseVM = firebaseVM, navController = navController)
+        ProfileDetailsPage(
+            userProfile = UserProfile(),
+            firebaseVM = firebaseVM,
+            navController = navController,
+            authVM = authVM,
+            chatZaVM = chatZaVM
+        )
     }
 }
 
@@ -104,9 +121,11 @@ fun ProfileDetailsScreen(
 @Composable
 private fun ProfileDetailsPage(
     userProfile: UserProfile,
-    firebaseVM : FirebaseViewModel,
+    firebaseVM: FirebaseViewModel,
+    authVM: AuthViewModel,
+    chatZaVM: ChatZaViewModel,
     navController: NavHostController
-){
+) {
     val currentContext = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -124,6 +143,12 @@ private fun ProfileDetailsPage(
             genderFilterTerm = currentUserProfile.gender
             selectedProvince = currentUserProfile.province
         }
+    }
+
+    suspend fun getUserDetails(): UserProfile {
+        val profile = firebaseVM.getProfileDetails(authVM.auth.currentUser!!.email.toString())
+        progressBarState = false
+        return profile
     }
 
     //Variables
@@ -163,7 +188,11 @@ private fun ProfileDetailsPage(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .background(chatZaBlue, RoundedCornerShape(10.dp))
-                    .border(width = 1.dp, color = Color.DarkGray, shape = RoundedCornerShape(10.dp)),
+                    .border(
+                        width = 1.dp,
+                        color = Color.DarkGray,
+                        shape = RoundedCornerShape(10.dp)
+                    ),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -192,8 +221,7 @@ private fun ProfileDetailsPage(
                     Icons.Default.Delete,
                     modifier = Modifier
                         .size(40.dp)
-                        .padding(end = 10.dp)
-                        ,
+                        .padding(end = 10.dp),
                     tint = chatZaBlue,
                     contentDescription = null
                 )
@@ -422,30 +450,59 @@ private fun ProfileDetailsPage(
                 )
             }
 
+            Spacer(modifier = Modifier.height(15.dp))
+
             Button(
-                onClick = {  },
+                onClick = { },
                 shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 45.dp)
                     .height(50.dp)
-                    .border(border = BorderStroke(width = 0.5.dp, color = Color.DarkGray), shape = RoundedCornerShape(50.dp)),
-                colors = ButtonDefaults.buttonColors(containerColor = chatZaBrown)
+                    .border(
+                        border = BorderStroke(width = 0.5.dp, color = Color.DarkGray),
+                        shape = RoundedCornerShape(50.dp)
+                    ),
+                colors = ButtonDefaults.buttonColors(containerColor = chatZaBlue)
             ) {
                 Text(text = "Send Friend Request", fontSize = 15.sp, color = Color.DarkGray)
             }
 
+            Spacer(modifier = Modifier.height(10.dp))
+
+            //Send Message
+            if (chatZaVM.currentUserDetails.value!!.email != authVM.auth.currentUser!!.email){
             Button(
-                onClick = {  },
+                onClick = {
+                    progressBarState = true
+                    scope.launch {
+                        val chatName = chatZaVM.currentUserDetails.value!!.name
+                        if (firebaseVM.doesChatExist(chatName)) {
+                            Toast.makeText(currentContext, "Chat Already Exists", Toast.LENGTH_SHORT).show()
+                        } else {
+                            if (firebaseVM.uploadChat(Chat(chatName = chatName, participants = mutableListOf(getUserDetails(), chatZaVM.currentUserDetails.value!!), chatCreator = getUserDetails())) == SuccessChatUpload(true)) {
+                                //chatZaVM.setCurrentChat(chatName)
+                                val userDetails = getUserDetails()
+                                firebaseVM.editUserDetails(oldUserDetails = userDetails, newUserDetails = userDetails.copy(chatGroups = mutableListOf(userDetails.email + chatZaVM.currentUserDetails.value!!.email)))
+                                //navController.navigate(Screen.ChatDetailsScreen.route)
+                                Toast.makeText(currentContext, "Chat Created", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(currentContext, firebaseVM.chatUploadException.value?.message.toString(), Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                    progressBarState = false
+                },
                 shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 45.dp)
                     .height(50.dp)
                     .border(border = BorderStroke(width = 0.5.dp, color = Color.DarkGray), shape = RoundedCornerShape(50.dp)),
-                colors = ButtonDefaults.buttonColors(containerColor = chatZaBrown)
+                colors = ButtonDefaults.buttonColors(containerColor = chatZaBlue)
             ) {
                 Text(text = "Send Message", fontSize = 15.sp, color = Color.DarkGray)
+               }
             }
 
             Spacer(modifier = Modifier.height(30.dp))

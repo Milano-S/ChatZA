@@ -9,5 +9,5 @@ data class UserProfile(
     val province : String = "",
     val profileImageUrl : String = "",
     val chatGroups : List<String> = mutableListOf(),
-    val friends : List<UserProfile> = mutableListOf()
+    val friends : List<UserProfile> = mutableListOf(),
 )

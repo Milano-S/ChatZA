@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.autoSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +57,7 @@ import com.mil.chatza.domain.model.Message
 import com.mil.chatza.presentation.components.ChatMessageBubble
 import com.mil.chatza.presentation.components.ProgressBar
 import com.mil.chatza.presentation.navigation.Screen
+import com.mil.chatza.presentation.viewmodels.AuthViewModel
 import com.mil.chatza.presentation.viewmodels.ChatZaViewModel
 import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
 import com.mil.chatza.ui.theme.chatZaBlue
@@ -70,6 +72,7 @@ private const val TAG = "ChatScreen"
 fun ChatScreen(
     navController: NavHostController,
     chatZaVM: ChatZaViewModel,
+    authVM: AuthViewModel,
     firebaseVM: FirebaseViewModel
 ) {
 
@@ -103,7 +106,7 @@ fun ChatScreen(
         },
     ) { paddingValues ->
         print(paddingValues)
-        ChatScreenContent(firebaseVM = firebaseVM, chatZaVM = chatZaVM, navController = navController)
+        ChatScreenContent(firebaseVM = firebaseVM, chatZaVM = chatZaVM, navController = navController, authVM = authVM)
     }
 }
 
@@ -111,6 +114,7 @@ fun ChatScreen(
 private fun ChatScreenContent(
     chatZaVM: ChatZaViewModel,
     firebaseVM: FirebaseViewModel,
+    authVM : AuthViewModel,
     navController: NavHostController
 ) {
     //Adaptive Chunk Values
@@ -175,7 +179,7 @@ private fun ChatScreenContent(
                             val previousMessage: Message? = if (messageList.indexOf(message) != 0) messageList[messageList.indexOf(message) - 1] else null
                             ChatMessageBubble(
                                 message = message,
-                                isUser = message.sender.email == firebaseVM.currentProfileDetails.value?.email,
+                                isUser = message.sender.email == authVM.auth.currentUser!!.email,
                                 isPreviousMessage = false,
                                 userName = message.sender.name,
                                 profileImageUrl = message.sender.profileImageUrl,

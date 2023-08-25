@@ -1,12 +1,11 @@
 package com.mil.chatza.domain.model
 
 data class Chat(
-    val chatName: String,
-    val participants: List<UserProfile>,
-    val lastMessage: String,
-    val isPrivate : Boolean,
-    val messages: List<Message>
-) {
-    constructor() : this("", emptyList(), "", false, emptyList())
-}
+    val chatName: String = "",
+    val participants: List<UserProfile> = emptyList(),
+    val lastMessage: String = "",
+    val isPrivate: Boolean = false,
+    val messages: List<Message> = emptyList(),
+    val chatCreator: UserProfile = UserProfile()
+)
 
