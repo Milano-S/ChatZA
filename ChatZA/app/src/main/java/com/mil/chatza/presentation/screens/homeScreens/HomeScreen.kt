@@ -144,28 +144,6 @@ private fun HomePageContent(
                     item {
                         ProvinceChatCard(text = province, onClick = {
                             navController.navigate(Screen.ChatDetailsScreen.route)
-                            /*scope.launch {
-                                //val currentUser = runBlocking { firebaseVM.getProfileDetails(authVM.auth.currentUser?.email.toString())}
-                                val currentUser = firebaseVM.currentProfileDetails.value
-                                if (currentUser != null) {
-                                    try {
-                                        firebaseVM.uploadChat(
-                                            Chat(
-                                                chatName = province,
-                                                participants = listOf(currentUser, currentUser),
-                                                lastMessage = "",
-                                                isPrivate = false,
-                                                messages = listOf(
-                                                    Message(sender = currentUser, message = "Hello World"),
-                                                    Message(sender = currentUser, message = "Hello World")
-                                                )
-                                            )
-                                        )
-                                    } catch (e: Exception) {
-                                        Log.i(TAG, e.message.toString())
-                                    }
-                                }
-                            }*/
                             chatZaVM.setCurrentChat(province)
                         })
                     }

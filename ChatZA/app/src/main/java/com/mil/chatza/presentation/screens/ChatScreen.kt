@@ -85,7 +85,7 @@ fun ChatScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    androidx.compose.material3.Text(text = chatZaVM.currentChatName.value.toString())
+                    androidx.compose.material3.Text(text = chatZaVM.currentChatName.value.toString().replace(firebaseVM.currentProfileDetails.value.toString(), ""))
                 },
                 navigationIcon = {
                     IconButton(
@@ -141,9 +141,8 @@ private fun ChatScreenContent(
             try {
                 progressBarState = true
                 chatDetails = firebaseVM.getChatDetails(chatZaVM.currentChatName.value.toString())
-                isChatJoined =
-                    firebaseVM.currentProfileDetails.value!!.chatGroups.contains(chatDetails!!.chatName)
-                scrollState.animateScrollToItem(chatDetails!!.messages.size - 1)
+                isChatJoined = firebaseVM.currentProfileDetails.value!!.chatGroups.contains(chatDetails!!.chatName)
+                try { scrollState.animateScrollToItem(chatDetails!!.messages.size - 1) } catch (e : Exception){ Log.i(TAG, e.message.toString()) }
                 progressBarState = false
             } catch (e: Exception) {
                 progressBarState = false
@@ -322,72 +321,4 @@ private fun ChatScreenContent(
         true -> ProgressBar()
         else -> {}
     }
-}
-
-@Composable
-private fun OutlinedTextField(
-    chatDetails: Chat,
-    firebaseVM: FirebaseViewModel,
-    chatZaVM: ChatZaViewModel
-) {
-    val scope = rememberCoroutineScope()
-    val currentContext = LocalContext.current
-    var messageText by remember { mutableStateOf("") }
-
-    OutlinedTextField(
-        modifier = Modifier
-            .padding(15.dp)
-            .fillMaxWidth(),
-        value = messageText,
-        onValueChange = { messageText = it },
-        label = { Text("Message...", color = Color.Gray, fontSize = 16.sp) },
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = chatZaBlue,
-            unfocusedBorderColor = chatZaBlue,
-        ),
-        trailingIcon = {
-            Icon(
-                modifier = Modifier.clickable {
-                    if (messageText.isNotBlank()) {
-                        scope.launch {
-                            try {
-                                firebaseVM.sendMessage(
-                                    chatDetails = chatDetails,
-                                    newMessage = Message(
-                                        sender = firebaseVM.currentProfileDetails.value!!,
-                                        message = messageText
-                                    )
-                                )
-                                (chatDetails.messages as MutableList).apply {
-                                    add(
-                                        Message(
-                                            sender = firebaseVM.currentProfileDetails.value!!,
-                                            message = messageText
-                                        )
-                                    )
-                                }
-                                messageText = ""
-                            } catch (e: Exception) {
-                                messageText = ""
-                                Log.i(TAG, e.message.toString())
-                                Toast.makeText(
-                                    currentContext,
-                                    e.message.toString(),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
-                    }
-                },
-                imageVector = Icons.Default.Send,
-                contentDescription = "Clear"
-            )
-        },
-    )
-}
-
-@Preview
-@Composable
-private fun PreviewChatScreen() {
-    //ChatScreen(rememberNavController())
 }

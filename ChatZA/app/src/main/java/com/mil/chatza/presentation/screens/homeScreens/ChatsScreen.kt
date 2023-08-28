@@ -30,7 +30,9 @@ import com.mil.chatza.domain.model.UserProfile
 import com.mil.chatza.presentation.components.ProgressBar
 import com.mil.chatza.presentation.components.ProvinceChatCard
 import com.mil.chatza.presentation.components.UserChatCard
+import com.mil.chatza.presentation.navigation.Screen
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
+import com.mil.chatza.presentation.viewmodels.ChatZaViewModel
 import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
 import com.mil.chatza.ui.theme.chatZaBrown
 import kotlinx.coroutines.async
@@ -42,7 +44,8 @@ import kotlinx.coroutines.launch
 fun ChatsScreen(
     navController: NavHostController,
     firebaseVM: FirebaseViewModel,
-    authVM : AuthViewModel
+    authVM: AuthViewModel,
+    chatZaVM: ChatZaViewModel
 ) {
 
     val scaffoldState = rememberScaffoldState()
@@ -61,7 +64,12 @@ fun ChatsScreen(
         },
     ) { paddingValues ->
         print(paddingValues)
-        ChatsScreenContent(navController = navController, firebaseVM = firebaseVM, authVM = authVM)
+        ChatsScreenContent(
+            navController = navController,
+            firebaseVM = firebaseVM,
+            authVM = authVM,
+            chatZaVM = chatZaVM
+        )
     }
 
 }
@@ -70,7 +78,8 @@ fun ChatsScreen(
 private fun ChatsScreenContent(
     navController: NavHostController,
     firebaseVM: FirebaseViewModel,
-    authVM : AuthViewModel
+    authVM: AuthViewModel,
+    chatZaVM: ChatZaViewModel
 ) {
 
     suspend fun getUserDetails(): UserProfile {
@@ -83,9 +92,9 @@ private fun ChatsScreenContent(
     var chatList by remember { mutableStateOf(listOf<Chat>()) }
     var myDetails by remember { mutableStateOf(UserProfile()) }
     LaunchedEffect(Unit) {
+        myDetails = firebaseVM.currentProfileDetails.value!!
         chatList = firebaseVM.getAllChats()
         progressBarState = false
-        myDetails = getUserDetails()
     }
 
     Surface(
@@ -105,17 +114,20 @@ private fun ChatsScreenContent(
 
             chatList.forEach { chat ->
                 progressBarState = true
-                if (!Consts.provinceList.contains(chat.chatName)) {
-                    UserChatCard(name = chat.chatName, email = "test@test.com", onClick = { })
+                if (!Consts.provinceList.contains(chat.chatName) && chat.participants.any { it.email == firebaseVM.currentProfileDetails.value!!.email }) {
+                    val chatNameWithoutName = chat.chatName.replace(myDetails.name, "")
+                    UserChatCard(name = chatNameWithoutName, email = "test@test.com", onClick = {
+                        chatZaVM.setCurrentChat(chatNameWithoutName)
+                        navController.navigate(Screen.ChatDetailsScreen.route)
+                    })
                 }
                 progressBarState = false
             }
 
-
         }
         when (progressBarState) {
             true -> ProgressBar()
-            else -> {}
+            else -> {  }
         }
     }
 }

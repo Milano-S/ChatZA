@@ -208,7 +208,7 @@ private fun ProfileDetailsPage(
                 )
                 Text(
                     modifier = Modifier.padding(10.dp),
-                    text = "Profile",
+                    text = if (chatZaVM.currentUserDetails.value!!.email != authVM.auth.currentUser!!.email) "Profile" else "Your Profile",
                     style = TextStyle(
                         fontSize = 26.sp,
                         fontFamily = FontFamily.Default,
@@ -452,57 +452,59 @@ private fun ProfileDetailsPage(
 
             Spacer(modifier = Modifier.height(15.dp))
 
-            Button(
-                onClick = { },
-                shape = RoundedCornerShape(50.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 45.dp)
-                    .height(50.dp)
-                    .border(
-                        border = BorderStroke(width = 0.5.dp, color = Color.DarkGray),
-                        shape = RoundedCornerShape(50.dp)
-                    ),
-                colors = ButtonDefaults.buttonColors(containerColor = chatZaBlue)
-            ) {
-                Text(text = "Send Friend Request", fontSize = 15.sp, color = Color.DarkGray)
-            }
+            if (chatZaVM.currentUserDetails.value!!.email != authVM.auth.currentUser!!.email) {
+                Button(
+                    onClick = { },
+                    shape = RoundedCornerShape(50.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 45.dp)
+                        .height(50.dp)
+                        .border(
+                            border = BorderStroke(width = 0.5.dp, color = Color.DarkGray),
+                            shape = RoundedCornerShape(50.dp)
+                        ),
+                    colors = ButtonDefaults.buttonColors(containerColor = chatZaBlue)
+                ) {
+                    Text(text = "Send Friend Request", fontSize = 15.sp, color = Color.DarkGray)
+                }
 
-            Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-            //Send Message
-            if (chatZaVM.currentUserDetails.value!!.email != authVM.auth.currentUser!!.email){
-            Button(
-                onClick = {
-                    progressBarState = true
-                    scope.launch {
-                        val chatName = chatZaVM.currentUserDetails.value!!.name
-                        if (firebaseVM.doesChatExist(chatName)) {
-                            Toast.makeText(currentContext, "Chat Already Exists", Toast.LENGTH_SHORT).show()
-                        } else {
-                            if (firebaseVM.uploadChat(Chat(chatName = chatName, participants = mutableListOf(getUserDetails(), chatZaVM.currentUserDetails.value!!), chatCreator = getUserDetails())) == SuccessChatUpload(true)) {
-                                //chatZaVM.setCurrentChat(chatName)
-                                val userDetails = getUserDetails()
-                                firebaseVM.editUserDetails(oldUserDetails = userDetails, newUserDetails = userDetails.copy(chatGroups = mutableListOf(userDetails.email + chatZaVM.currentUserDetails.value!!.email)))
-                                //navController.navigate(Screen.ChatDetailsScreen.route)
-                                Toast.makeText(currentContext, "Chat Created", Toast.LENGTH_SHORT).show()
+                //Send Message
+                Button(
+                    onClick = {
+                        progressBarState = true
+                        scope.launch {
+                            val chatName = getUserDetails().name + chatZaVM.currentUserDetails.value!!.name
+                            if (firebaseVM.doesChatExist(chatName)) {
+                                Toast.makeText(currentContext, "Chat Already Exists", Toast.LENGTH_SHORT).show()
                             } else {
-                                Toast.makeText(currentContext, firebaseVM.chatUploadException.value?.message.toString(), Toast.LENGTH_SHORT).show()
+                                if (firebaseVM.uploadChat(Chat(chatName = chatName, participants = mutableListOf(getUserDetails(), chatZaVM.currentUserDetails.value!!), chatCreator = getUserDetails())) == SuccessChatUpload(true)) {
+                                    chatZaVM.setCurrentChat(chatName)
+                                    firebaseVM.joinChatGroup(chatDetails = firebaseVM.getChatDetails(chatName), userDetails = firebaseVM.currentProfileDetails.value)
+                                    navController.navigate(Screen.ChatDetailsScreen.route)
+                                    Toast.makeText(currentContext, "Chat Created", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(currentContext, firebaseVM.chatUploadException.value?.message.toString(), Toast.LENGTH_SHORT).show()
+                                }
                             }
                         }
-                    }
-                    progressBarState = false
-                },
-                shape = RoundedCornerShape(50.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 45.dp)
-                    .height(50.dp)
-                    .border(border = BorderStroke(width = 0.5.dp, color = Color.DarkGray), shape = RoundedCornerShape(50.dp)),
-                colors = ButtonDefaults.buttonColors(containerColor = chatZaBlue)
-            ) {
-                Text(text = "Send Message", fontSize = 15.sp, color = Color.DarkGray)
-               }
+                        progressBarState = false
+                    },
+                    shape = RoundedCornerShape(50.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 45.dp)
+                        .height(50.dp)
+                        .border(
+                            border = BorderStroke(width = 0.5.dp, color = Color.DarkGray),
+                            shape = RoundedCornerShape(50.dp)
+                        ),
+                    colors = ButtonDefaults.buttonColors(containerColor = chatZaBlue)
+                ) {
+                    Text(text = "Send Message", fontSize = 15.sp, color = Color.DarkGray)
+                }
             }
 
             Spacer(modifier = Modifier.height(30.dp))

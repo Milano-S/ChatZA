@@ -74,7 +74,7 @@ fun NavGraph(
             }
 
             composable(Screen.FriendsScreen.route) {
-                ChatsScreen(navController = navController, firebaseViewModel, authVM)
+                ChatsScreen(navController = navController, firebaseViewModel, authVM, chatZaViewModel)
             }
 
             composable(Screen.HelpScreen.route) {

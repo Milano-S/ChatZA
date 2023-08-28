@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
@@ -216,13 +217,15 @@ fun VerifyEmailScreen(navController: NavHostController, authVM: AuthViewModel) {
 
             Button(
                 onClick = {
-                    scope.launch {
-                        authVM.auth.currentUser!!.reload().await()
-                    }
-                    val toastText = if (authVM.auth.currentUser!!.isEmailVerified) "Email Authenticated" else "Not Authenticated"
-                    Toast.makeText(currentContext, toastText, Toast.LENGTH_SHORT).show()
-                    if (authVM.auth.currentUser!!.isEmailVerified){
-                        navController.navigate(Screen.CreateProfilePage.route)
+                    repeat(3) {
+                        scope.launch {
+                            authVM.auth.currentUser!!.reload().await()
+                        }
+                        val toastText = if (authVM.auth.currentUser!!.isEmailVerified) "Email Authenticated" else "Not Authenticated"
+                        Toast.makeText(currentContext, toastText, Toast.LENGTH_SHORT).show()
+                        if (authVM.auth.currentUser!!.isEmailVerified) {
+                            navController.navigate(Screen.CreateProfilePage.route)
+                        }
                     }
                 },
                 shape = RoundedCornerShape(50.dp),

@@ -69,7 +69,7 @@ fun HomePage(navController: NavHostController, authVM : AuthViewModel, firebaseV
         }
         when (currentScreen) {
             Screen.HomeScreen.route -> HomeScreen(navController = navController, authVM = authVM, firebaseVM = firebaseVM, chatZaVM = chatZaViewModel)
-            Screen.ChatScreen.route -> ChatsScreen(navController = navController, firebaseVM = firebaseVM, authVM = authVM)
+            Screen.ChatScreen.route -> ChatsScreen(navController = navController, firebaseVM = firebaseVM, authVM = authVM, chatZaVM = chatZaViewModel)
             Screen.FriendsScreen.route -> FriendScreen()
             Screen.ProfileScreen.route -> ProfileScreen(navController = navController, authVM = authVM, firebaseVM = firebaseVM)
         }

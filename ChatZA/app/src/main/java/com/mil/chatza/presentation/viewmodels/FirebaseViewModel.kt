@@ -47,7 +47,6 @@ class FirebaseViewModel : ViewModel() {
         return chats
     }
 
-
     suspend fun doesChatExist(chatName: String): Boolean {
         val chatList = firebaseChats.get().await()
         chatList.forEach { chat ->

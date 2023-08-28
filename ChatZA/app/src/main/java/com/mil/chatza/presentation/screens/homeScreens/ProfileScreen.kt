@@ -106,6 +106,7 @@ fun ProfileScreen(
     }
 
     var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var genderFilterTerm by remember { mutableStateOf("") }
     var selectedProvince by remember { mutableStateOf("") }
@@ -114,6 +115,7 @@ fun ProfileScreen(
         scope.launch {
             currentUserProfile = getUserDetails()
             username = currentUserProfile.name
+            email = currentUserProfile.email
             age = currentUserProfile.age
             genderFilterTerm = currentUserProfile.gender
             selectedProvince = currentUserProfile.province
@@ -274,6 +276,31 @@ fun ProfileScreen(
                         .fillMaxWidth()
                 )
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            //Email
+            TextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 20.dp
+                    ),
+                value = email,
+                singleLine = true,
+                onValueChange = {
+                    email = it
+                },
+                label = { Text(text = "Email", color = Color.Gray) },
+                colors = TextFieldDefaults.textFieldColors(
+                    backgroundColor = chatZaBrown,
+                    cursorColor = Color.DarkGray,
+                    focusedIndicatorColor = Color.DarkGray,
+                    disabledTextColor = Color.Black
+                ),
+                isError = false,
+                enabled = false
+            )
 
             Spacer(modifier = Modifier.height(10.dp))
 
