@@ -6,8 +6,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.auth.User
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
@@ -25,7 +23,6 @@ import com.mil.chatza.domain.model.UploadChatResult
 import com.mil.chatza.domain.model.UploadImageResult
 import com.mil.chatza.domain.model.UploadUserResult
 import com.mil.chatza.domain.model.UserProfile
-import com.mil.chatza.domain.repository.UserProfileRepositoryImp.Companion.email
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -58,6 +55,17 @@ class FirebaseViewModel : ViewModel() {
         return false
     }
 
+    suspend fun doesFriendChatExist(friend1: String, friend2: String): Boolean {
+        val chatList = firebaseChats.get().await()
+        chatList.forEach { chat ->
+            val chatData = chat.toObject(Chat::class.java)
+            if (chatData.chatName.contains(friend1) && chatData.chatName.contains(friend2)) {
+                return true
+            }
+        }
+        return false
+    }
+
 
     //Upload User
     private var _userUploadException = MutableLiveData<Exception>()
@@ -71,6 +79,24 @@ class FirebaseViewModel : ViewModel() {
         } catch (e: Exception) {
             _userUploadException.value = e
             FailureUserUpload(e)
+        }
+    }
+
+    //Upload Friend Chat
+    private var _friendChatUploadException = MutableLiveData<Exception>()
+    var friendChatUploadException : LiveData<Exception> = _userUploadException
+    suspend fun uploadFriendChat(chat: Chat): UploadChatResult {
+        chat.isFriendChat = true
+        return try {
+            firebaseDb.collection(Consts.chats)
+                .add(chat)
+                .await()
+            Log.i(TAG, chat.chatName)
+            SuccessChatUpload(true)
+        } catch (e: Exception) {
+            Log.i(TAG, e.message.toString())
+            _chatUploadException.value = e
+            FailureChatUpload(e)
         }
     }
 

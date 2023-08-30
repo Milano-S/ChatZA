@@ -39,14 +39,14 @@ import com.mil.chatza.ui.theme.chatZaBlue
 import com.mil.chatza.ui.theme.chatZaBrownDark
 
 private const val TAG = "ChatMessageBubble"
-
 @Composable
 fun ChatMessageBubble(
     userName: String,
     message: Message,
     profileImageUrl: String,
     isUser: Boolean,
-    isPreviousMessage: Boolean,
+    isPreviousMessage: Boolean = false,
+    isFriendChat : Boolean = false,
     firebaseVM: FirebaseViewModel,
     profileClick : () -> Unit
 ) {
@@ -63,7 +63,6 @@ fun ChatMessageBubble(
         } catch (e: Exception) {
             Log.i(TAG, e.message.toString())
         }
-
     }
 
     Column(
@@ -72,7 +71,7 @@ fun ChatMessageBubble(
             .padding(horizontal = 0.dp, vertical = 2.5.dp),
         horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
     ) {
-        if (!isPreviousMessage) {
+        if (!isPreviousMessage || isFriendChat) {
             Row(
                 modifier = Modifier.padding(start = 8.dp),
                 verticalAlignment = Alignment.CenterVertically

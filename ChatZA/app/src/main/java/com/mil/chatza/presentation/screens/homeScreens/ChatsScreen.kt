@@ -117,7 +117,7 @@ private fun ChatsScreenContent(
                 if (!Consts.provinceList.contains(chat.chatName) && chat.participants.any { it.email == firebaseVM.currentProfileDetails.value!!.email }) {
                     val chatNameWithoutName = chat.chatName.replace(myDetails.name, "")
                     UserChatCard(name = chatNameWithoutName, email = "test@test.com", onClick = {
-                        chatZaVM.setCurrentChat(chatNameWithoutName)
+                        chatZaVM.setCurrentChat(chat.chatName)
                         navController.navigate(Screen.ChatDetailsScreen.route)
                     })
                 }

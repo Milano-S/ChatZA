@@ -6,6 +6,7 @@ data class Chat(
     val lastMessage: String = "",
     val isPrivate: Boolean = false,
     val messages: List<Message> = emptyList(),
-    val chatCreator: UserProfile = UserProfile()
+    val chatCreator: UserProfile = UserProfile(),
+    var isFriendChat: Boolean = false
 )
 

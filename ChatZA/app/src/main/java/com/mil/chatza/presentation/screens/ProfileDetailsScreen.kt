@@ -129,7 +129,7 @@ private fun ProfileDetailsPage(
     val currentContext = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var progressBarState by remember { mutableStateOf(false) }
+    var progressBarState by remember { mutableStateOf(true) }
 
     var username by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
@@ -142,6 +142,7 @@ private fun ProfileDetailsPage(
             age = currentUserProfile.age
             genderFilterTerm = currentUserProfile.gender
             selectedProvince = currentUserProfile.province
+            progressBarState = false
         }
     }
 
@@ -477,12 +478,13 @@ private fun ProfileDetailsPage(
                         progressBarState = true
                         scope.launch {
                             val chatName = getUserDetails().name + chatZaVM.currentUserDetails.value!!.name
-                            if (firebaseVM.doesChatExist(chatName)) {
+                            if (firebaseVM.doesFriendChatExist(friend1 = getUserDetails().name, friend2 = chatZaVM.currentUserDetails.value!!.name)) {
                                 Toast.makeText(currentContext, "Chat Already Exists", Toast.LENGTH_SHORT).show()
                             } else {
-                                if (firebaseVM.uploadChat(Chat(chatName = chatName, participants = mutableListOf(getUserDetails(), chatZaVM.currentUserDetails.value!!), chatCreator = getUserDetails())) == SuccessChatUpload(true)) {
+                                if (firebaseVM.uploadFriendChat(Chat(chatName = chatName, participants = mutableListOf(getUserDetails(), chatZaVM.currentUserDetails.value!!), chatCreator = getUserDetails())) == SuccessChatUpload(true)) {
                                     chatZaVM.setCurrentChat(chatName)
                                     firebaseVM.joinChatGroup(chatDetails = firebaseVM.getChatDetails(chatName), userDetails = firebaseVM.currentProfileDetails.value)
+                                    firebaseVM.joinChatGroup(chatDetails = firebaseVM.getChatDetails(chatName), userDetails = currentUserProfile)
                                     navController.navigate(Screen.ChatDetailsScreen.route)
                                     Toast.makeText(currentContext, "Chat Created", Toast.LENGTH_SHORT).show()
                                 } else {
@@ -515,11 +517,4 @@ private fun ProfileDetailsPage(
             else -> {}
         }
     }
-}
-
-
-@Preview
-@Composable
-private fun PreviewProfileDetailsScreen() {
-    //ProfileDetailsScreen()
 }

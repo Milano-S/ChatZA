@@ -69,7 +69,6 @@ import java.util.UUID
 
 
 private const val TAG = "HomeScreen"
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
