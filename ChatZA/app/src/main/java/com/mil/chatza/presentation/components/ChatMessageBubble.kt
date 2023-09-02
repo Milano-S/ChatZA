@@ -46,7 +46,7 @@ fun ChatMessageBubble(
     profileImageUrl: String,
     isUser: Boolean,
     isPreviousMessage: Boolean = false,
-    isFriendChat : Boolean = false,
+    isFriendChat : Boolean /*= false*/,
     firebaseVM: FirebaseViewModel,
     profileClick : () -> Unit
 ) {
@@ -71,7 +71,7 @@ fun ChatMessageBubble(
             .padding(horizontal = 0.dp, vertical = 2.5.dp),
         horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
     ) {
-        if (!isPreviousMessage || isFriendChat) {
+        if (!isPreviousMessage || !isFriendChat) {
             Row(
                 modifier = Modifier.padding(start = 8.dp),
                 verticalAlignment = Alignment.CenterVertically

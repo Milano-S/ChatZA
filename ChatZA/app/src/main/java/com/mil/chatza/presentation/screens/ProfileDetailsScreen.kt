@@ -491,8 +491,8 @@ private fun ProfileDetailsPage(
                                     Toast.makeText(currentContext, firebaseVM.chatUploadException.value?.message.toString(), Toast.LENGTH_SHORT).show()
                                 }
                             }
+                            progressBarState = false
                         }
-                        progressBarState = false
                     },
                     shape = RoundedCornerShape(50.dp),
                     modifier = Modifier

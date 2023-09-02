@@ -96,7 +96,7 @@ fun ChatScreen(
     val currentContext = LocalContext.current
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
-    val titleText by remember { mutableStateOf(chatZaVM.currentChatName.value.toString()) }
+    var titleText by remember { mutableStateOf(chatZaVM.currentChatName.value.toString()) }
     var showDropDown by remember { mutableStateOf(false) }
     val dropDownMenuItems = listOf(
         Pair("Participants", Icons.Default.Person),
@@ -120,10 +120,9 @@ fun ChatScreen(
         scope.launch {
             while (true) {
                 try {
-                    chatDetails =
-                        firebaseVM.getChatDetails(chatZaVM.currentChatName.value.toString())
-                    isChatJoined =
-                        firebaseVM.currentProfileDetails.value!!.chatGroups.contains(chatDetails!!.chatName)
+                    chatDetails = firebaseVM.getChatDetails(chatZaVM.currentChatName.value.toString())
+                    isChatJoined = firebaseVM.currentProfileDetails.value!!.chatGroups.contains(chatDetails!!.chatName)
+                    titleText = titleText.replace(firebaseVM.getProfileDetails(authVM.auth.currentUser!!.email.toString()).name, "")
                     if (chatDetails!!.messages.size > lastMessageCount) {
                         try {
                             scrollState.animateScrollToItem(chatDetails!!.messages.size - 1)
@@ -159,8 +158,7 @@ fun ChatScreen(
             TopAppBar(
                 title = {
                     androidx.compose.material3.Text(
-                        text =
-                        titleText
+                        text = titleText
                     )
                 },
                 navigationIcon = {
@@ -237,10 +235,7 @@ fun ChatScreen(
                     if (chatDetails != null) {
                         items(chatDetails!!.messages.chunked(columns)) { messageList ->
                             messageList.forEach { message ->
-                                val previousMessage: Message? =
-                                    if (messageList.indexOf(message) != 0) messageList[messageList.indexOf(
-                                        message
-                                    ) - 1] else null
+                                val previousMessage: Message? = if (messageList.indexOf(message) != 0) messageList[messageList.indexOf(message) - 1] else null
                                 ChatMessageBubble(
                                     message = message,
                                     isUser = message.sender.email == authVM.auth.currentUser!!.email,
@@ -381,17 +376,12 @@ fun ChatScreen(
 
                 }
             }
-
-
         }
 
         when (progressBarState) {
             true -> ProgressBar()
             else -> {}
         }
-
-
     }
-
 }
 
