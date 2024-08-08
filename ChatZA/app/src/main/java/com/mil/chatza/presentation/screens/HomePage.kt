@@ -7,6 +7,8 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -21,19 +23,17 @@ import com.mil.chatza.presentation.navigation.Screen
 import com.mil.chatza.presentation.screens.homeScreens.HomeScreen
 import com.mil.chatza.presentation.screens.homeScreens.ProfileScreen
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
+import com.mil.chatza.presentation.viewmodels.ChatZaViewModel
 import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
 import com.mil.chatza.ui.theme.chatZaBlue
 import com.mil.chatza.ui.theme.chatZaBrown
 
 @Composable
-fun HomePage(navController: NavHostController, authVM : AuthViewModel, firebaseVM :FirebaseViewModel) {
+fun HomePage(navController: NavHostController, authVM : AuthViewModel, firebaseVM :FirebaseViewModel, chatZaViewModel: ChatZaViewModel) {
 
-
-    val bottomNavScreens = listOf(Screen.HomeScreen, Screen.SettingsScreen, Screen.ProfileScreen)
+    val bottomNavScreens = listOf(Screen.HomeScreen, Screen.ChatScreen, Screen.FriendsScreen, Screen.ProfileScreen)
     val currentContext = LocalContext.current
-    var currentScreen by remember {
-        mutableStateOf(Screen.HomeScreen.route)
-    }
+    var currentScreen by remember { mutableStateOf(Screen.HomeScreen.route) }
 
     Scaffold(
         bottomBar = {
@@ -45,8 +45,9 @@ fun HomePage(navController: NavHostController, authVM : AuthViewModel, firebaseV
                         icon = {
                             when(screen){
                                 Screen.HomeScreen -> Icon(Icons.Default.Home, contentDescription = null, tint = chatZaBlue)
-                                Screen.SettingsScreen -> Icon(Icons.Default.Search, contentDescription = null, tint = chatZaBlue)
-                                Screen.ProfileScreen -> Icon(Icons.Default.Person, contentDescription = null, tint = chatZaBlue)
+                                Screen.ChatScreen -> Icon(Icons.Default.Email, contentDescription = null, tint = chatZaBlue)
+                                Screen.FriendsScreen -> Icon(Icons.Default.Person, contentDescription = null, tint = chatZaBlue)
+                                Screen.ProfileScreen -> Icon(Icons.Default.AccountCircle, contentDescription = null, tint = chatZaBlue)
                                 else -> {}
                             }
                         },
@@ -67,9 +68,10 @@ fun HomePage(navController: NavHostController, authVM : AuthViewModel, firebaseV
             }
         }
         when (currentScreen) {
-            Screen.HomeScreen.route -> HomeScreen(navController = navController, authVM = authVM)
-            Screen.SettingsScreen.route -> SearchScreen()
-            Screen.ProfileScreen.route -> ProfileScreen(authVM, firebaseVM)
+            Screen.HomeScreen.route -> HomeScreen(navController = navController, authVM = authVM, firebaseVM = firebaseVM, chatZaVM = chatZaViewModel)
+            Screen.ChatScreen.route -> ChatsScreen(navController = navController, firebaseVM = firebaseVM, authVM = authVM, chatZaVM = chatZaViewModel)
+            Screen.FriendsScreen.route -> FriendScreen()
+            Screen.ProfileScreen.route -> ProfileScreen(navController = navController, authVM = authVM, firebaseVM = firebaseVM)
         }
     }
 }

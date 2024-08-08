@@ -1,7 +1,12 @@
 package com.mil.chatza.presentation.screens
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.nfc.Tag
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -14,6 +19,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,13 +27,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme.colors
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,13 +75,15 @@ import com.mil.chatza.domain.model.SuccessUserUpload
 import com.mil.chatza.domain.model.UserProfile
 import com.mil.chatza.domain.repository.UserProfileRepositoryImp.Companion.age
 import com.mil.chatza.presentation.navigation.Screen
+import com.mil.chatza.ui.theme.chatZaBlue
 import com.mil.chatza.ui.theme.chatZaBrown
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
 
+private const val TAG = "HelpScreen"
 @Composable
-fun DisclaimerScreen(
+fun HelpScreen(
     navController: NavHostController,
 ) {
 
@@ -81,12 +95,6 @@ fun DisclaimerScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        //Back Button
-        BackHandler(enabled = true) {
-            if (currentContext is Activity) {
-                currentContext.moveTaskToBack(true)
-            }
-        }
         Column(
             modifier = Modifier
                 .background(chatZaBrown)
@@ -96,31 +104,65 @@ fun DisclaimerScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Spacer(modifier = Modifier.height(70.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             //Header Text
-            Text(
-                "ATTENTION",
-                style = TextStyle(
-                    fontSize = 32.sp,
-                    fontFamily = FontFamily.Default,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.DarkGray
-                ),
-                textAlign = TextAlign.Center
-            )
+            Row(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .background(chatZaBlue, RoundedCornerShape(10.dp))
+                    .border(width = 1.dp, color = Color.DarkGray, shape = RoundedCornerShape(10.dp)),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.ArrowBack,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .fillMaxHeight()
+                        .padding(start = 10.dp)
+                        .clickable { navController.popBackStack() },
+                    tint = Color.DarkGray,
+                    contentDescription = null
+                )
+                Text(
+                    modifier = Modifier.padding(10.dp),
+                    text = "Help",
+                    style = TextStyle(
+                        fontSize = 26.sp,
+                        fontFamily = FontFamily.Default,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.DarkGray
+                    ),
+                    textAlign = TextAlign.Center
+                )
+                Icon(
+                    Icons.Default.Delete,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .padding(end = 10.dp),
+                    tint = chatZaBlue,
+                    contentDescription = null
+                )
+            }
 
-            Image(
+            Icon(
+                Icons.Default.Info,
                 modifier = Modifier
                     .size(230.dp)
                     .clip(RoundedCornerShape(56.dp))
                     .clickable { },
-                painter = painterResource(id = R.drawable.caution), contentDescription = "icon"
+                tint = chatZaBlue,
+                 contentDescription = "icon"
             )
 
             Text(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                text = "Remember to be respectful to everyone.\n\n Stay safe and do not share your personal details with strangers",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                text = "Forward any queries you may have to the following email address\n\n ${Consts.chatZaEmail}" ,
                 style = TextStyle(
                     fontSize = 20.sp,
                     fontFamily = FontFamily.Default,
@@ -135,7 +177,10 @@ fun DisclaimerScreen(
             //Continue
             Button(
                 onClick = {
-                    navController.navigate(route = Consts.Companion.Graph.MAIN)
+                    currentContext.sendMail(
+                        to = Consts.chatZaEmail,
+                        subject = "ChatZA App Inquiry",
+                    )
                 },
                 shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
@@ -144,13 +189,11 @@ fun DisclaimerScreen(
                     .height(50.dp)
                     .border(
                         border = BorderStroke(width = 0.75.dp, color = Color.DarkGray),
-                        shape = RoundedCornerShape(
-                            50.dp
-                        )
+                        shape = RoundedCornerShape(50.dp)
                     ),
                 colors = ButtonDefaults.buttonColors(containerColor = chatZaBrown)
             ) {
-                Text(text = "Continue", fontSize = 15.sp, color = Color.DarkGray)
+                Text(text = "Send Email", fontSize = 15.sp, color = Color.DarkGray)
             }
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -158,11 +201,23 @@ fun DisclaimerScreen(
     }
 }
 
+private fun Context.sendMail(to: String, subject: String) {
+    try {
+        val intent = Intent(Intent.ACTION_SEND)
+        intent.type = "vnd.android.cursor.item/email"
+        intent.putExtra(Intent.EXTRA_EMAIL, arrayOf(to))
+        intent.putExtra(Intent.EXTRA_SUBJECT, subject)
+        startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Log.i(TAG, e.message.toString())
+    } catch (t: Throwable) {
+        Log.i(TAG, t.message.toString())
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
-private fun PreviewRegister() {
-    DisclaimerScreen(
-        navController = rememberNavController(),
-    )
+private fun PreviewHelp() {
+    HelpScreen(navController = rememberNavController(),)
 }
 

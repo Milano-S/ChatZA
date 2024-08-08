@@ -1,11 +1,12 @@
 package com.mil.chatza.presentation.screens
 
+import android.content.Context
 import android.util.Patterns
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,10 +23,10 @@ import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -42,24 +44,35 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.mil.chatza.R
+import com.mil.chatza.domain.model.Response
+import com.mil.chatza.presentation.components.ProgressBar
+import com.mil.chatza.presentation.navigation.Screen
+import com.mil.chatza.presentation.viewmodels.AuthViewModel
 import com.mil.chatza.ui.theme.chatZaBrown
 
 @Composable
 fun ForgotPasswordScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    authVM: AuthViewModel = hiltViewModel()
 ) {
 
-    var email by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    var forgotPasswordEmail by remember { mutableStateOf("") }
     var isEmailError by remember { mutableStateOf(false) }
 
     fun validateEmail(): Boolean {
-        isEmailError = !Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        isEmailError = !Patterns.EMAIL_ADDRESS.matcher(forgotPasswordEmail).matches()
         return isEmailError
     }
+
+    fun showMessage(
+        context: Context,
+        message: String?
+    ) = Toast.makeText(context, message, Toast.LENGTH_LONG).show()
 
     Surface(
         modifier = Modifier
@@ -121,10 +134,10 @@ fun ForgotPasswordScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp),
                 singleLine = true,
-                value = email,
+                value = forgotPasswordEmail,
                 onValueChange = {
                     isEmailError = false
-                    email = it
+                    forgotPasswordEmail = it
                 },
                 label = { Text(text = "Email", color = Color.Gray) },
                 colors = TextFieldDefaults.textFieldColors(
@@ -153,7 +166,9 @@ fun ForgotPasswordScreen(
                     validateEmail()
                     if (!isEmailError) {
                         //Forgot Password Stuff
+                        authVM.sendPasswordResetEmail(forgotPasswordEmail)
                     }
+                    forgotPasswordEmail = ""
                 },
                 shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
@@ -173,10 +188,36 @@ fun ForgotPasswordScreen(
         }
     }
 
+    when (val sendPasswordResetEmailResponse = authVM.sendPasswordResetEmailResponse) {
+        is Response.Loading -> ProgressBar()
+        is Response.Success -> {
+            val isPasswordResetEmailSent = sendPasswordResetEmailResponse.data
+            LaunchedEffect(isPasswordResetEmailSent) {
+                if (isPasswordResetEmailSent == true) {
+                    navController.popBackStack()
+                    navController.navigate(route = Screen.LoginPage.route)
+                    showMessage(
+                        context,
+                        "We've sent you an email with a link to reset the password."
+                    )
+                }
+            }
+        }
+
+        is Response.Failure -> {
+            sendPasswordResetEmailResponse.apply {
+                LaunchedEffect(e) {
+                    print(e)
+                    showMessage(context, e.message)
+                }
+            }
+        }
+    }
+
 }
 
 @Composable
 @Preview(showBackground = true)
 private fun ForgotPasswordPreview() {
-    ForgotPasswordScreen(navController = rememberNavController())
+    //ForgotPasswordScreen(navController = rememberNavController())
 }

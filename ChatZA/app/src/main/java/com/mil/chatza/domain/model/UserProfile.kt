@@ -7,5 +7,7 @@ data class UserProfile(
     val age : String = "",
     val gender : String = "",
     val province : String = "",
-    val profileImageUrl : String = ""
+    val profileImageUrl : String = "",
+    val chatGroups : List<String> = mutableListOf(),
+    val friends : List<UserProfile> = mutableListOf(),
 )

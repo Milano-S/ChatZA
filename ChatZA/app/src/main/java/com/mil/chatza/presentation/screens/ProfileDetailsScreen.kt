@@ -1,12 +1,7 @@
-package com.mil.chatza.presentation.screens.homeScreens
+package com.mil.chatza.presentation.screens
 
-import android.net.Uri
 import android.util.Log
-import android.widget.ProgressBar
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -36,10 +32,17 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.ExposedDropdownMenuDefaults
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,19 +68,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import com.google.android.play.integrity.internal.f
 import com.mil.chatza.R
 import com.mil.chatza.core.utils.Consts
-import com.mil.chatza.domain.model.SuccessGsUrl
+import com.mil.chatza.domain.model.Chat
+import com.mil.chatza.domain.model.SuccessChatUpload
+import com.mil.chatza.domain.model.UploadChatResult
 import com.mil.chatza.domain.model.UserProfile
-import com.mil.chatza.domain.repository.UserProfileRepositoryImp.Companion.age
-import com.mil.chatza.domain.repository.UserProfileRepositoryImp.Companion.gender
 import com.mil.chatza.presentation.components.ProgressBar
 import com.mil.chatza.presentation.navigation.Screen
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
+import com.mil.chatza.presentation.viewmodels.ChatZaViewModel
 import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
 import com.mil.chatza.ui.theme.chatZaBlue
 import com.mil.chatza.ui.theme.chatZaBrown
@@ -85,19 +87,64 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 
-private const val TAG = "ProfileScreen"
+private const val TAG = "ProfileDetailsScreen"
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ProfileScreen(
+fun ProfileDetailsScreen(
     navController: NavHostController,
+    firebaseVM: FirebaseViewModel,
     authVM: AuthViewModel,
-    firebaseVM: FirebaseViewModel
+    chatZaVM: ChatZaViewModel
 ) {
+    val userProfile = chatZaVM.currentUserDetails.value
+    if (userProfile != null) {
+        ProfileDetailsPage(
+            userProfile = userProfile,
+            firebaseVM = firebaseVM,
+            navController = navController,
+            authVM = authVM,
+            chatZaVM = chatZaVM
+        )
+    } else {
+        ProfileDetailsPage(
+            userProfile = UserProfile(),
+            firebaseVM = firebaseVM,
+            navController = navController,
+            authVM = authVM,
+            chatZaVM = chatZaVM
+        )
+    }
+}
 
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun ProfileDetailsPage(
+    userProfile: UserProfile,
+    firebaseVM: FirebaseViewModel,
+    authVM: AuthViewModel,
+    chatZaVM: ChatZaViewModel,
+    navController: NavHostController
+) {
     val currentContext = LocalContext.current
     val scope = rememberCoroutineScope()
 
     var progressBarState by remember { mutableStateOf(true) }
+
+    var username by remember { mutableStateOf("") }
+    var age by remember { mutableStateOf("") }
+    var genderFilterTerm by remember { mutableStateOf("") }
+    var selectedProvince by remember { mutableStateOf("") }
+    val currentUserProfile by remember { mutableStateOf(userProfile) }
+    LaunchedEffect(Unit) {
+        scope.launch {
+            username = currentUserProfile.name
+            age = currentUserProfile.age
+            genderFilterTerm = currentUserProfile.gender
+            selectedProvince = currentUserProfile.province
+            progressBarState = false
+        }
+    }
 
     suspend fun getUserDetails(): UserProfile {
         val profile = firebaseVM.getProfileDetails(authVM.auth.currentUser!!.email.toString())
@@ -105,28 +152,11 @@ fun ProfileScreen(
         return profile
     }
 
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf("") }
-    var genderFilterTerm by remember { mutableStateOf("") }
-    var selectedProvince by remember { mutableStateOf("") }
-    var currentUserProfile by remember { mutableStateOf(UserProfile()) }
-    LaunchedEffect(Unit) {
-        scope.launch {
-            currentUserProfile = getUserDetails()
-            username = currentUserProfile.name
-            email = currentUserProfile.email
-            age = currentUserProfile.age
-            genderFilterTerm = currentUserProfile.gender
-            selectedProvince = currentUserProfile.province
-        }
-    }
-
     //Variables
     var isUsernameError by remember { mutableStateOf(false) }
-    var isAgeError by remember { mutableStateOf(false) }
-    var isProvinceError by remember { mutableStateOf(false) }
-    var isGenderError by remember { mutableStateOf(false) }
+    val isAgeError by remember { mutableStateOf(false) }
+    val isProvinceError by remember { mutableStateOf(false) }
+    val isGenderError by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
     Surface(
@@ -164,11 +194,22 @@ fun ProfileScreen(
                         color = Color.DarkGray,
                         shape = RoundedCornerShape(10.dp)
                     ),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Icon(
+                    Icons.Default.ArrowBack,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .fillMaxHeight()
+                        .padding(start = 10.dp)
+                        .clickable { navController.popBackStack() },
+                    tint = Color.DarkGray,
+                    contentDescription = null
+                )
                 Text(
                     modifier = Modifier.padding(10.dp),
-                    text = "Profile",
+                    text = if (chatZaVM.currentUserDetails.value!!.email != authVM.auth.currentUser!!.email) "Profile" else "Your Profile",
                     style = TextStyle(
                         fontSize = 26.sp,
                         fontFamily = FontFamily.Default,
@@ -176,6 +217,14 @@ fun ProfileScreen(
                         color = Color.DarkGray
                     ),
                     textAlign = TextAlign.Center
+                )
+                Icon(
+                    Icons.Default.Delete,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .padding(end = 10.dp),
+                    tint = chatZaBlue,
+                    contentDescription = null
                 )
             }
             Spacer(modifier = Modifier.height(30.dp))
@@ -193,7 +242,6 @@ fun ProfileScreen(
             ) {
 
                 AsyncImage(
-                    //model = firebaseVM.replaceEncodedColon(currentUserProfile.profileImageUrl),
                     model = if (currentUserProfile.profileImageUrl != "") runBlocking {
                         firebaseVM.getDownloadUrlFromGsUrl(
                             firebaseVM.replaceEncodedColon(currentUserProfile.profileImageUrl)
@@ -210,37 +258,6 @@ fun ProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(10.dp))
-
-            //Edit Profile
-            Chip(
-                border = BorderStroke(width = 1.dp, color = Color.DarkGray),
-                shape = RoundedCornerShape(10.dp),
-                colors = ChipDefaults.chipColors(
-                    backgroundColor = chatZaBlue,
-                    disabledBackgroundColor = Color.Gray,
-                    disabledContentColor = Color.Black,
-                    contentColor = Color.Black,
-                ),
-                onClick = {
-                    navController.navigate(Screen.EditProfileScreen.route)
-                },
-                modifier = Modifier
-                    .wrapContentHeight()
-                    .wrapContentWidth()
-                    .padding(horizontal = 75.dp)
-            ) {
-                Text(
-                    text = "Edit Profile",
-                    color = chatZaBrown,
-                    fontSize = 13.sp,
-                    modifier = Modifier
-                        .padding(9.dp)
-                        .wrapContentWidth(),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
             Spacer(modifier = Modifier.height(10.dp))
 
             //Username
@@ -276,31 +293,6 @@ fun ProfileScreen(
                         .fillMaxWidth()
                 )
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            //Email
-            TextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 20.dp
-                    ),
-                value = email,
-                singleLine = true,
-                onValueChange = {
-                    email = it
-                },
-                label = { Text(text = "Email", color = Color.Gray) },
-                colors = TextFieldDefaults.textFieldColors(
-                    backgroundColor = chatZaBrown,
-                    cursorColor = Color.DarkGray,
-                    focusedIndicatorColor = Color.DarkGray,
-                    disabledTextColor = Color.Black
-                ),
-                isError = false,
-                enabled = false
-            )
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -459,6 +451,64 @@ fun ProfileScreen(
                 )
             }
 
+            Spacer(modifier = Modifier.height(15.dp))
+
+            if (chatZaVM.currentUserDetails.value!!.email != authVM.auth.currentUser!!.email) {
+                Button(
+                    onClick = { },
+                    shape = RoundedCornerShape(50.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 45.dp)
+                        .height(50.dp)
+                        .border(
+                            border = BorderStroke(width = 0.5.dp, color = Color.DarkGray),
+                            shape = RoundedCornerShape(50.dp)
+                        ),
+                    colors = ButtonDefaults.buttonColors(containerColor = chatZaBlue)
+                ) {
+                    Text(text = "Send Friend Request", fontSize = 15.sp, color = Color.DarkGray)
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                //Send Message
+                Button(
+                    onClick = {
+                        progressBarState = true
+                        scope.launch {
+                            val chatName = getUserDetails().name + chatZaVM.currentUserDetails.value!!.name
+                            if (firebaseVM.doesFriendChatExist(friend1 = getUserDetails().name, friend2 = chatZaVM.currentUserDetails.value!!.name)) {
+                                Toast.makeText(currentContext, "Chat Already Exists", Toast.LENGTH_SHORT).show()
+                            } else {
+                                if (firebaseVM.uploadFriendChat(Chat(chatName = chatName, participants = mutableListOf(getUserDetails(), chatZaVM.currentUserDetails.value!!), chatCreator = getUserDetails())) == SuccessChatUpload(true)) {
+                                    chatZaVM.setCurrentChat(chatName)
+                                    firebaseVM.joinChatGroup(chatDetails = firebaseVM.getChatDetails(chatName), userDetails = firebaseVM.currentProfileDetails.value)
+                                    firebaseVM.joinChatGroup(chatDetails = firebaseVM.getChatDetails(chatName), userDetails = currentUserProfile)
+                                    navController.navigate(Screen.ChatDetailsScreen.route)
+                                    Toast.makeText(currentContext, "Chat Created", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(currentContext, firebaseVM.chatUploadException.value?.message.toString(), Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            progressBarState = false
+                        }
+                    },
+                    shape = RoundedCornerShape(50.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 45.dp)
+                        .height(50.dp)
+                        .border(
+                            border = BorderStroke(width = 0.5.dp, color = Color.DarkGray),
+                            shape = RoundedCornerShape(50.dp)
+                        ),
+                    colors = ButtonDefaults.buttonColors(containerColor = chatZaBlue)
+                ) {
+                    Text(text = "Send Message", fontSize = 15.sp, color = Color.DarkGray)
+                }
+            }
+
             Spacer(modifier = Modifier.height(30.dp))
 
         }
@@ -467,121 +517,4 @@ fun ProfileScreen(
             else -> {}
         }
     }
-}
-
-/*
-@Composable
-fun com.mil.chatza.presentation.screens.homeScreens.ProfileScreen() {
-
-    val currentContext = LocalContext.current
-
-    var selectedImageUri by remember {
-        mutableStateOf<Uri?>(null)
-    }
-    val photoPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { selectedImageUri = it }
-    )
-
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(chatZaBrown)
-                .padding(
-                    start = 15.dp,
-                    end = 15.dp,
-                    top = 15.dp,
-                )
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
-        ) {
-
-            //Top Bar
-            Row(
-                modifier = Modifier
-                    .wrapContentHeight()
-                    .fillMaxWidth()
-                    .background(chatZaBlue, RoundedCornerShape(20.dp))
-                    .border(
-                        width = 1.dp,
-                        color = Color.DarkGray,
-                        shape = RoundedCornerShape(20.dp)
-                    ),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    modifier = Modifier.padding(10.dp),
-                    text = "Profile",
-                    style = TextStyle(
-                        fontSize = 32.sp,
-                        fontFamily = FontFamily.Default,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.DarkGray
-                    ),
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            //Profile Picture
-            Card(
-                modifier = Modifier
-                    .width(200.dp)
-                    .height(200.dp),
-                border = BorderStroke(width = 1.dp, color = Color.DarkGray),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                ),
-                shape = CircleShape,
-            ) {
-
-                AsyncImage(
-                    model = selectedImageUri,
-                    contentScale = ContentScale.Crop,
-                    placeholder = painterResource(id = R.drawable.profile_2),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable {
-                            try {
-                                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            } catch (e: Exception) {
-                                Log.i(com.mil.chatza.presentation.screens.homeScreens.TAG, e.message.toString())
-                                Toast
-                                    .makeText(
-                                        currentContext,
-                                        e.message.toString(),
-                                        Toast.LENGTH_SHORT
-                                    )
-                                    .show()
-                            }
-                        },
-                    fallback = painterResource(id = R.drawable.profile_2)
-                )
-            }
-
-            Text(
-                modifier = Modifier.padding(10.dp),
-                text = "Profile",
-                style = TextStyle(
-                    fontSize = 32.sp,
-                    fontFamily = FontFamily.Default,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.DarkGray
-                ),
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-
-}
-*/
-
-@Preview
-@Composable
-private fun PreviewProfileScreen() {
-
 }

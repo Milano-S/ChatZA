@@ -9,6 +9,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.mil.chatza.domain.model.Response
 import com.mil.chatza.domain.repository.AuthRepository
 import com.mil.chatza.domain.repository.OneTapSignInResponse
+import com.mil.chatza.domain.repository.SendPasswordResetEmailResponse
 import com.mil.chatza.domain.repository.SignInWithGoogleResponse
 import com.mil.chatza.domain.repository.SignOutResponse
 import kotlinx.coroutines.tasks.await
@@ -63,6 +64,15 @@ class AuthRepositoryImplementation @Inject constructor(
         return try {
             oneTapClient.signOut().await()
             auth.signOut()
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    override suspend fun sendPasswordResetEmail(email: String): SendPasswordResetEmailResponse {
+        return try {
+            auth.sendPasswordResetEmail(email).await()
             Response.Success(true)
         } catch (e: Exception) {
             Response.Failure(e)

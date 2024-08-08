@@ -1,6 +1,7 @@
 package com.mil.chatza.presentation.screens.homeScreens
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -8,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,10 +22,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Scaffold
 import androidx.compose.material.ScaffoldState
+import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.Card
@@ -32,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -42,22 +47,35 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import com.google.android.play.integrity.internal.f
+import com.google.firebase.firestore.auth.User
 import com.mil.chatza.R
 import com.mil.chatza.core.utils.Consts
+import com.mil.chatza.domain.model.Chat
+import com.mil.chatza.domain.model.Message
+import com.mil.chatza.domain.model.UserProfile
+import com.mil.chatza.presentation.components.ProvinceChatCard
 import com.mil.chatza.presentation.navigation.Screen
 import com.mil.chatza.presentation.viewmodels.AuthViewModel
+import com.mil.chatza.presentation.viewmodels.ChatZaViewModel
+import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
+import com.mil.chatza.ui.theme.chatZaBrown
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.util.Calendar
+import java.util.UUID
 
 
+private const val TAG = "HomeScreen"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
-    authVM: AuthViewModel
+    authVM: AuthViewModel,
+    firebaseVM: FirebaseViewModel,
+    chatZaVM: ChatZaViewModel
 ) {
 
     val currentContext = LocalContext.current
@@ -68,7 +86,7 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = "Drawer Sample")
+                    Text(text = "ChatZA Groups")
                 },
                 navigationIcon = {
                     IconButton(
@@ -83,12 +101,54 @@ fun HomeScreen(
                             contentDescription = ""
                         )
                     }
-                })
+                }, colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = chatZaBrown
+                )
+            )
         },
-
         drawerContent = { DrawerView(currentContext, scaffoldState, scope, authVM, navController) },
     ) { paddingValues ->
         print(paddingValues)
+        HomePageContent(
+            authVM = authVM,
+            chatZaVM = chatZaVM,
+            firebaseVM = firebaseVM,
+            navController = navController,
+        )
+    }
+}
+
+@Composable
+private fun HomePageContent(
+    chatZaVM: ChatZaViewModel,
+    authVM: AuthViewModel,
+    firebaseVM: FirebaseViewModel,
+    navController: NavHostController,
+) {
+    val currentContext = LocalContext.current
+    val scope = rememberCoroutineScope()
+    Surface {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 60.dp),
+            ) {
+                Consts.provinceList.forEach { province ->
+                    item {
+                        ProvinceChatCard(text = province, onClick = {
+                            navController.navigate(Screen.ChatDetailsScreen.route)
+                            chatZaVM.setCurrentChat(province)
+                        })
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -100,11 +160,9 @@ private fun DrawerView(
     authVM: AuthViewModel,
     navController: NavHostController
 ) {
-    val language = listOf("Settings", "Info", "Log Out")
+    val language = listOf("Help", "Rate Us", "Log Out")
     LazyColumn {
-        item {
-            AddDrawerHeader()
-        }
+        item { AddDrawerHeader() }
         items(language.size) { index ->
 
             AddDrawerContentView(
@@ -118,7 +176,13 @@ private fun DrawerView(
                             Toast.makeText(context, "Logged Out", Toast.LENGTH_SHORT).show()
                         }
 
-                        else -> {}
+                        "Help" -> {
+                            navController.navigate(Screen.HelpScreen.route)
+                        }
+
+                        else -> {
+                            Toast.makeText(context, language[index], Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             )
@@ -130,9 +194,9 @@ private fun DrawerView(
 private fun AddDrawerContentView(title: String, menuItemClick: () -> Unit) {
     val drawerIcon = when (title) {
         "Log Out" -> Icons.Default.ExitToApp
-        "Info" -> Icons.Default.Info
+        "Rate Us" -> Icons.Default.Star
         else -> {
-            Icons.Default.Settings
+            Icons.Default.Info
         }
     }
 
