@@ -1,5 +1,13 @@
 package com.mil.chatza.presentation.screens
 
+import android.app.Activity
+import android.net.Uri
+import android.util.Patterns
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,8 +27,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.Button
@@ -30,48 +40,90 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.auth.api.identity.BeginSignInResult
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.GoogleAuthProvider
 import com.mil.chatza.R
+import com.mil.chatza.core.utils.Consts
+import com.mil.chatza.domain.model.Response
+import com.mil.chatza.domain.model.SuccessLogin
+import com.mil.chatza.presentation.components.ProgressBar
+import com.mil.chatza.presentation.navigation.Screen
+import com.mil.chatza.presentation.viewmodels.AuthViewModel
+import com.mil.chatza.presentation.viewmodels.FirebaseViewModel
+import com.mil.chatza.ui.theme.chatZaBlue
 import com.mil.chatza.ui.theme.chatZaBrown
+import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(navController: NavHostController) {
+fun LoginScreen(
+    navController: NavHostController,
+    authVM: AuthViewModel,
+    firebaseVM: FirebaseViewModel
+) {
 
     val currentContext = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisibility by remember { mutableStateOf(false) }
+    var isEmailError by remember { mutableStateOf(false) }
+    var isPasswordError by remember { mutableStateOf(false) }
+    var progressBarState by remember { mutableStateOf(false) }
+
+    fun validateLoginDetails(): Boolean {
+        isEmailError = !Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        isPasswordError = password.isEmpty()
+        return isEmailError && isPasswordError
+    }
 
     Surface(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
+        //Back Button
+        BackHandler(enabled = true) {
+            if (currentContext is Activity) {
+                currentContext.moveTaskToBack(true)
+            }
+        }
 
         Column(
             modifier = Modifier
-                .background(Color.White)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(chatZaBrown, Color.White, chatZaBrown),
+                        start = Offset.Zero,
+                        end = Offset.Infinite
+                    )
+                )
                 .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -79,7 +131,7 @@ fun LoginScreen(navController: NavHostController) {
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = SpaceBetween,
                 modifier = Modifier
                     .padding(
                         horizontal = 20.dp
@@ -115,17 +167,30 @@ fun LoginScreen(navController: NavHostController) {
                     .padding(
                         horizontal = 20.dp
                     ),
-                value = username,
-                onValueChange = { newText: String ->
-                    username = newText
+                singleLine = true,
+                value = email,
+                onValueChange = {
+                    isEmailError = false
+                    email = it
                 },
-                label = { Text(text = "Name", color = Color.Gray) },
+                label = { Text(text = "Email", color = Color.Gray) },
                 colors = TextFieldDefaults.textFieldColors(
                     backgroundColor = chatZaBrown,
                     cursorColor = Color.DarkGray,
                     focusedIndicatorColor = Color.DarkGray
-                )
+                ),
+                isError = isEmailError
             )
+            if (isEmailError) {
+                androidx.compose.material.Text(
+                    text = "Email is Invalid",
+                    color = Color.Red,
+                    style = MaterialTheme.typography.caption,
+                    modifier = Modifier
+                        .padding(start = 20.dp)
+                        .fillMaxWidth()
+                )
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -136,21 +201,119 @@ fun LoginScreen(navController: NavHostController) {
                     .padding(
                         horizontal = 20.dp
                     ),
+                singleLine = true,
                 label = { Text(text = "Password", color = Color.Gray) },
                 value = password,
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                onValueChange = { password = it },
+                onValueChange = {
+                    isPasswordError = false
+                    password = it
+                },
                 colors = TextFieldDefaults.textFieldColors(
                     backgroundColor = chatZaBrown,
                     cursorColor = Color.DarkGray,
                     focusedIndicatorColor = Color.DarkGray
+                ),
+                isError = isPasswordError,
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisibility = !passwordVisibility }) {
+                        androidx.compose.material.Icon(
+                            painter = painterResource(id = R.drawable.password_eye),
+                            contentDescription = null,
+                            tint = if (passwordVisibility) Color(0xC4FFFFFF) else Color.DarkGray,
+                        )
+                    }
+                },
+            )
+            if (isPasswordError) {
+                androidx.compose.material.Text(
+                    text = "Password can't be Empty",
+                    color = Color.Red,
+                    style = MaterialTheme.typography.caption,
+                    modifier = Modifier
+                        .padding(start = 20.dp)
+                        .fillMaxWidth()
+                )
+            }
+            Text(
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(horizontal = 20.dp)
+                    .clickable { navController.navigate(Screen.ForgotPasswordScreen.route) },
+                textAlign = TextAlign.End,
+                text = "Forgot Password",
+                style = TextStyle(
+                    fontSize = 13.sp,
+                    fontFamily = FontFamily.Default,
+                    color = chatZaBlue
                 )
             )
 
             Spacer(modifier = Modifier.height(20.dp))
+
+            //Login
             Button(
-                onClick = { },
+                onClick = {
+                    validateLoginDetails()
+                    if (!isEmailError && !isPasswordError) {
+                        progressBarState = true
+                        scope.launch {
+                            try {
+                                if (authVM.logIn(
+                                        email = email.trimEnd(),
+                                        password = password.trimEnd()
+                                    ) == SuccessLogin(true)
+                                ) {
+                                    //Login Success
+                                    val currentUser = authVM.auth.currentUser!!
+                                    if (!currentUser.isEmailVerified) {
+                                        //Not Verified
+                                        Toast.makeText(
+                                            currentContext,
+                                            "Login Successful",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        navController.navigate(Screen.VerifyEmailPage.route)
+                                    } else if (currentUser.isEmailVerified && firebaseVM.getProfileDetails(
+                                            currentUser.email.toString()
+                                        ).name != ""
+                                    ) {
+                                        navController.navigate(route = Consts.Companion.Graph.MAIN)
+                                    } else {
+                                        //Verified and no Profile
+                                        Toast.makeText(
+                                            currentContext,
+                                            "Logged In and Verified",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        navController.navigate(Screen.CreateProfilePage.route)
+                                    }
+                                } else {
+                                    //Login Failure
+                                    email = ""
+                                    password = ""
+                                    Toast.makeText(
+                                        currentContext,
+                                        authVM.loginException.value?.message.toString(),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    progressBarState = false
+                                }
+                            } catch (e: Exception) {
+                                //Login Exception
+                                email = ""
+                                password = ""
+                                Toast.makeText(
+                                    currentContext,
+                                    e.message.toString(),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                progressBarState = false
+                            }
+                        }
+                    }
+                },
                 shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -167,44 +330,50 @@ fun LoginScreen(navController: NavHostController) {
                 Text(text = "Login", fontSize = 15.sp, color = Color.DarkGray)
             }
 
-
             Spacer(modifier = Modifier.height(27.5.dp))
-            ClickableText(
-                text = AnnotatedString("New User? Register Now"),
-                onClick = { },
-                style = TextStyle(
-                    fontSize = 15.sp,
-                    fontFamily = FontFamily.Default,
-                    color = Color.DarkGray
+            Row {
+                Text(
+                    text = "New User?",
+                    style = TextStyle(
+                        fontSize = 15.sp,
+                        fontFamily = FontFamily.Default,
+                        color = Color.DarkGray
+                    )
                 )
-            )
+                Text(
+                    modifier = Modifier.clickable { navController.navigate(Screen.RegisterPage.route) },
+                    text = " Register Now",
+                    style = TextStyle(
+                        fontSize = 15.sp,
+                        fontFamily = FontFamily.Default,
+                        color = chatZaBlue
+                    )
+                )
+            }
             Spacer(modifier = Modifier.height(20.dp))
 
+            //Google and Facebook
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 50.dp),
-                horizontalArrangement = SpaceBetween
+                horizontalArrangement = Arrangement.Center
             ) {
                 listOf("Google", "Facebook").forEach {
                     Card(
                         modifier = Modifier
-                            .background(Color.White)
-                            .clickable {
-                                when (it) {
-                                    "Google" -> {}
-                                    "Facebook" -> {}
-                                }
-                            },
+                            .background(Color.Transparent),
                         shape = RoundedCornerShape(15.dp),
-                        border = BorderStroke(1.dp, Color.DarkGray)
+                        border = BorderStroke(0.5.dp, Color.DarkGray)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .wrapContentWidth()
                                 .background(chatZaBrown)
-                                .padding(end = 10.dp),
+                                .clickable {
+                                    authVM.oneTapSignIn()
+                                },
                             horizontalArrangement = Start
                         ) {
                             Icon(
@@ -222,13 +391,70 @@ fun LoginScreen(navController: NavHostController) {
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 it,
-                                modifier = Modifier.padding(end = 10.dp),
+                                modifier = Modifier.padding(end = 20.dp),
                                 textAlign = TextAlign.Start
                             )
                         }
                     }
+                    if (it == "Google"){
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
                 }
             }
+
+
+        }
+        when (progressBarState) {
+            true -> ProgressBar()
+            else -> {}
+        }
+    }
+    //Sign In With Google
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                try {
+                    val credentials =
+                        authVM.oneTapClient.getSignInCredentialFromIntent(result.data)
+                    val googleIdToken = credentials.googleIdToken
+                    val googleCredentials = GoogleAuthProvider.getCredential(googleIdToken, null)
+                    authVM.signInWithGoogle(googleCredentials)
+                } catch (it: ApiException) {
+                    print(it)
+                }
+            }
+        }
+
+    fun launch(signInResult: BeginSignInResult) {
+        val intent = IntentSenderRequest.Builder(signInResult.pendingIntent.intentSender).build()
+        launcher.launch(intent)
+    }
+
+    when (val oneTapSignInResponse = authVM.oneTapSignInResponse) {
+        is Response.Loading -> ProgressBar()
+        is Response.Success -> oneTapSignInResponse.data?.let {
+            LaunchedEffect(it) {
+                launch(it)
+            }
+        }
+
+        is Response.Failure -> LaunchedEffect(Unit) {
+            print(oneTapSignInResponse.e)
+        }
+    }
+    when (val signInWithGoogleResponse = authVM.signInWithGoogleResponse) {
+        is Response.Loading -> ProgressBar()
+        is Response.Success -> signInWithGoogleResponse.data?.let { signedIn ->
+            if (signedIn) {
+                LaunchedEffect(Unit) {
+                    //navController.popBackStack()
+                    navController.navigate(route = Screen.CreateProfilePage.route)
+                }
+            }
+        }
+
+        is Response.Failure -> LaunchedEffect(Unit) {
+            print(signInWithGoogleResponse.e)
         }
     }
 }
@@ -237,5 +463,5 @@ fun LoginScreen(navController: NavHostController) {
 @Preview(showBackground = true)
 @Composable
 private fun PreviewLogin() {
-    LoginScreen(navController = rememberNavController())
+    //LoginScreen(navController = rememberNavController(), authVM = AuthViewModel(), firebaseVM = FirebaseViewModel())
 }

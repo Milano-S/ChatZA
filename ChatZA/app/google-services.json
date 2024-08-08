@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "439510680880",
+    "project_id": "chatza-64491",
+    "storage_bucket": "chatza-64491.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:439510680880:android:bfb34295c6a917aaba74f5",
+        "android_client_info": {
+          "package_name": "com.mil.chatza"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "439510680880-eqrk17fpvvs36paa2fio7qm7rhfv3o0p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mil.chatza",
+            "certificate_hash": "10b34d36b74a15f94a31e672d63f321fd79419a9"
+          }
+        },
+        {
+          "client_id": "439510680880-val5eh9og6mfd65tb1mj2elspsrfel2p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQIm4X7B1pVHMiX9PQubfmiY2tzvRJkIA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "439510680880-8sd1uj0tvf2qtl7flma4j4dfbq7tscp7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

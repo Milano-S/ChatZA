@@ -1,3 +1,7 @@
 <resources>
+    <!--<string name="web_client_id">439510680880-val5eh9og6mfd65tb1mj2elspsrfel2p.apps.googleusercontent.com</string>-->
+    <string name="web_client_id">439510680880-val5eh9og6mfd65tb1mj2elspsrfel2p.apps.googleusercontent.com</string>
+
     <string name="app_name">ChatZA</string>
+    <string name="email">Email : %1$s</string>
 </resources>
