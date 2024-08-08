@@ -65,11 +65,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.identity.BeginSignInResult
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.storage.FirebaseStorage
 import com.mil.chatza.R
 import com.mil.chatza.core.utils.Consts
 import com.mil.chatza.domain.model.Response
@@ -277,7 +275,9 @@ fun LoginScreen(
                                             Toast.LENGTH_SHORT
                                         ).show()
                                         navController.navigate(Screen.VerifyEmailPage.route)
-                                    } else if (currentUser.isEmailVerified && firebaseVM.getProfileDetails(currentUser.email.toString()).name != ""
+                                    } else if (currentUser.isEmailVerified && firebaseVM.getProfileDetails(
+                                            currentUser.email.toString()
+                                        ).name != ""
                                     ) {
                                         navController.navigate(route = Consts.Companion.Graph.MAIN)
                                     } else {
@@ -359,7 +359,7 @@ fun LoginScreen(
                     .padding(horizontal = 50.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                listOf("Google").forEach {
+                listOf("Google", "Facebook").forEach {
                     Card(
                         modifier = Modifier
                             .background(Color.Transparent),
@@ -395,6 +395,9 @@ fun LoginScreen(
                                 textAlign = TextAlign.Start
                             )
                         }
+                    }
+                    if (it == "Google"){
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
                 }
             }
